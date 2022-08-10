@@ -6,10 +6,10 @@ If you are unfamiliar with the project, we recommend you read our 2-pager here:
 
 <a href="https://sirlemmings.github.io/Semaphore/2 pager.pdf" target="_blank">Semaphore 2-Pager.</a>
 
-For those adventurous souls who like the technical details, we invite you to read our working white paper here:
+For those interested the technical details, we invite you to read our white paper here:
 
 <a href="https://sirlemmings.github.io/Semaphore/Semaphore_v2.1.pdf" target="_blank">Semaphore White Paper.</a>
 
-Finally, if you don't mind buggy code and want to try out our proof-of-concept implementation, download the zip file and follow the README instructions.
+Finally, try out our WIP proof-of-concept implementation, download the zip file and follow the read-me instructions.
 
 <a href="https://github.com/SirLemmings/Semaphore/raw/gh-pages/Semaphore-main.zip" target="_blank">Implementation Code.</a>
