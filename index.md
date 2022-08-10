@@ -10,6 +10,6 @@ For those adventurous souls who like the technical details, we invite you to rea
 
 <a href="https://sirlemmings.github.io/Semaphore/Semaphore_v2.1.pdf" target="_blank">Semaphore White Paper.</a>
 
-Finally, if you don't mind buggy code and want to try out our proof-of-concept implementation, download the zip file and follow the read-me instructions.
+Finally, if you don't mind buggy code and want to try out our proof-of-concept implementation, download the zip file and follow the README instructions.
 
 <a href="https://github.com/SirLemmings/Semaphore/Semaphore-main.zip" target="_blank">Implementation Code.</a>
