@@ -12,4 +12,4 @@ For those adventurous souls who like the technical details, we invite you to rea
 
 Finally, if you don't mind buggy code and want to try out our proof-of-concept implementation, download the zip file and follow the read-me instructions.
 
-<a href="https://github.com/SirLemmings/Semaphore/raw/main/Semaphore-main.zip" target="_blank">Implementation Code.</a>
+<a href="https://github.com/SirLemmings/Semaphore/Semaphore-main.zip" target="_blank">Implementation Code.</a>
