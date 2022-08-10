@@ -12,4 +12,4 @@ For those interested the technical details, we invite you to read our white pape
 
 Finally, try out our WIP proof-of-concept implementation, download the zip file and follow the read-me instructions.
 
-<a href="https://github.com/SirLemmings/Semaphore/raw/gh-pages/Semaphore-main.zip" target="_blank">Implementation Code.</a>
+<a href="https://github.com/SirLemmings/Semaphore/raw/gh-pages/Semaphore.zip" target="_blank">Implementation Code.</a>
