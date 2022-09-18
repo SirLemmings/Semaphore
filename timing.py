@@ -61,7 +61,7 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        print("~CHAIN_COMMIT_LEN", len(cfg.epoch_chain_commit))
+        # print("~CHAIN_COMMIT_LEN", len(cfg.epoch_chain_commit))
     # print((cfg.epoch_chain_commit.keys()))
     # print((cfg.epoch_chain_commit.values()))
     # print(cfg.epochs)
@@ -116,9 +116,10 @@ def run_epoch():
     else:
         cfg.current_epoch += cfg.EPOCH_TIME
         if cfg.current_epoch != round(cfg.network_time()) + cfg.EPOCH_TIME:
-            print(
-                f"~WARNING TIMES NOT MATCH {cfg.current_epoch} {round(cfg.network_time()) + 1}"
-            )
+            pass
+            # print(
+            #     f"~WARNING TIMES NOT MATCH {cfg.current_epoch} {round(cfg.network_time()) + cfg.EPOCH_TIME}"
+            # )
 
 
 # TODO remove this function once we know its working. just merge with run_epoch

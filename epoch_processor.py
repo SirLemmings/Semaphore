@@ -3,6 +3,7 @@ from vote_processor import VoteProcessor
 from build_processor import BuildProcessor
 import config as cfg
 import connections as cn
+import broadcasts as bc
 
 EPOCH_VOTE_DELAY = (cfg.FORWARD_SLACK_EPOCHS + cfg.SLACK_EPOCHS) * cfg.EPOCH_TIME
 BUILD_DELAY = (
@@ -64,12 +65,30 @@ class EpochProcessor:
         elif self.time_alive == BUILD_DELAY:
             # print("~sync delay", self.epoch)
             confirmed_bc = self.processor.terminate_vote()
+            if cfg.SHOW_CONF_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
+                print("CONFIRMED BROADCASTS:")
+                output = []
+                for i in confirmed_bc:
+                    alias = bc.split_broadcast(i)["alias"]
+                    bcid = bc.calc_bcid(i)
+                    output.append((alias, bcid))
+                for i in sorted(output):
+                    print(f"{i[0]}: {i[1]}")
             # print('~done terminate')
             self.processor = BuildProcessor(self.epoch, confirmed_bc)
             self.state = "sync"
         elif self.time_alive == EPOCH_VOTE_DELAY:
             # print("~vote delay", self.epoch)
-            seen_bc = self.processor.seen_bc    
+            seen_bc = self.processor.seen_bc
+            if cfg.SHOW_SEEN_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
+                print("SEEN BROADCASTS:")
+                output = []
+                for i in seen_bc:
+                    alias = bc.split_broadcast(i)["alias"]
+                    bcid = bc.calc_bcid(i)
+                    output.append((alias, bcid))
+                for i in sorted(output):
+                    print(f"{i[0]}: {i[1]}")
             # print("~seen bc:",len(seen_bc))
             self.processor = VoteProcessor(self.epoch, seen_bc)
             self.state = "vote"

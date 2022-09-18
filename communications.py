@@ -123,15 +123,15 @@ def gossip_msg(msg: str, excluded=set()):
         """
 
     if cfg.RANDOM_DELAY is False:
-        for alias in cfg.peers.keys():
+        for alias in cfg.peers.copy():
             if alias not in excluded:
                 send_peer_message(alias, msg)
 
     else:
-        for alias in cfg.peers.keys():
+        for alias in cfg.peers.copy():
             if alias not in excluded:
                 # Adding a random time to test how peers handle this error
-                time = random.random() * 1.5+.4
+                time = (random.random() * 2.2 + 1) * (cfg.ALIAS != 1)
                 s.enter(
                     time, 0, send_peer_message, argument=[alias, msg],
                 )

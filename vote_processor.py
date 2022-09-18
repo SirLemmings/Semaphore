@@ -273,7 +273,7 @@ class VoteProcessor:
         """
         if acks == []:
             return
-
+        sufficient_samples = len(acks) >= cfg.VOTE_SAMPLE_NUM
         acks_union = set.union(*acks)
         acks_union = set.union(acks_union, self.broadcasts)
 
@@ -287,13 +287,33 @@ class VoteProcessor:
         # if not cfg.synced and cfg.current_epoch - self.epoch == 3:
         #     print('~comb',combined_acks)
         for bcid in combined_acks:
-            if combined_acks[bcid] >= cfg.VOTE_CONSENSUS_LEVEL:
-                self.confs[bcid] += 1
-            elif combined_acks[bcid] <= cfg.VOTE_SAMPLE_NUM - cfg.VOTE_CONSENSUS_LEVEL:
-                self.confs[bcid] -= 1
+            if sufficient_samples:
+                if combined_acks[bcid] >= cfg.VOTE_CONSENSUS_LEVEL:
+                    self.confs[bcid] += 1
+                elif (
+                    combined_acks[bcid]
+                    <= cfg.VOTE_SAMPLE_NUM - cfg.VOTE_CONSENSUS_LEVEL
+                ):
+                    self.confs[bcid] -= 1
+            else:  # right now the sufficient samples case is just a special case of the below, but we may want to change the insuffcient case in the future
+                if (
+                    combined_acks[bcid]
+                    >= len(acks) * cfg.VOTE_CONSENSUS_LEVEL / cfg.VOTE_SAMPLE_NUM
+                ):
+                    self.confs[bcid] += 1
+                elif (
+                    combined_acks[bcid]
+                    <= cfg.VOTE_SAMPLE_NUM
+                    - len(acks) * cfg.VOTE_CONSENSUS_LEVEL / cfg.VOTE_SAMPLE_NUM
+                ):
+                    self.confs[bcid] -= 1
         self.vote_rounds += 1
 
         # TODO CHECK FOR DRIFT
+        if cfg.SHOW_VOTE_CONFS and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
+            for c in self.confs:
+                print(f"{c}: {self.confs[c]}")
+            print()
 
     def terminate_vote(self):
         """

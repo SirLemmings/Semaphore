@@ -18,7 +18,7 @@ def request_history():
         "history_request",
         (chain_tip_epoch, chain_tip_hash),
         True,
-        specific_peers=cfg.peers_activated
+        specific_peers=cfg.peers_activated.copy()
     )
     # print("~tip", chain_tip_epoch)
 

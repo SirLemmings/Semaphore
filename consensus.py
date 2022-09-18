@@ -136,4 +136,4 @@ def sync_func(blocks):
     cfg.synced = True
     for epoch in cfg.epoch_processes.keys():
         cfg.epoch_chain_commit[epoch] = cfg.chain_commitment(epoch)
-    print("~***SYNCED***")
+    print("***SYNCED***")

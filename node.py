@@ -176,7 +176,7 @@ class Node:
         #     print(
         #         "~epoch not in keys", alias, process, epoch, cfg.epoch_processes.keys()
         #     )
-            # pr.remove_peer(alias)
+        # pr.remove_peer(alias)
 
     def commands(self):
         """
@@ -230,8 +230,12 @@ class Node:
                         if e.errno == errno.ECONNREFUSED:
                             pass
                 elif command == "fc":
-                    for i in range(cfg.ALIAS,10):
-                        cn.request_connection(i,str(cfg.IP),f'{i}'*4)
+                    for i in range(10):
+                        if i not in cfg.peers and i != cfg.ALIAS:
+                            try:
+                                cn.request_connection(i, str(cfg.IP), f"{i}" * 4)
+                            except:
+                                pass
                 elif command == "see_peers":
                     print(cfg.peers.keys())
                 elif command == "see_peers_active":
@@ -321,7 +325,10 @@ class Node:
                         )
                     self.peer_manager.gossip_msg(f"relay|{broadcast}")
                 elif cfg.ENABLE_MANUAL_BC and len(command) >= 1:
-                    cm.originate_broadcast(command)
+                    try:
+                        cm.originate_broadcast(command)
+                    except:
+                        pass
 
             except EOFError:
                 os._exit(0)
