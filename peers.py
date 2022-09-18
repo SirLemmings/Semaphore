@@ -107,6 +107,8 @@ def remove_peer(
     if alias in cfg.peers:
         print(f'~removing peer {alias}')
         del cfg.peers[alias]
+    if alias in cfg.peers_activated:
+        del cfg.peers_activated[alias]
 
 
 def full_connection(alias: int) -> bool:
@@ -141,3 +143,11 @@ def fully_connected_peer_aliases():
     """
     peers = cfg.peers.copy()
     return {alias for alias in peers if cfg.full_connection(alias)}
+
+def activate_peer(alias:int):
+    if alias in cfg.peers.keys():
+        cfg.peers_activated[alias]=cfg.peers[alias]
+
+def deactivate_peer(alias:int):
+    if alias in cfg.peers_activated:
+        del cfg.peers_activated[alias]

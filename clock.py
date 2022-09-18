@@ -1,6 +1,5 @@
 import time
 
-from hamcrest import none
 from process import Process
 import config as cfg
 import communications as cm

@@ -4,9 +4,6 @@ import communications as cm
 import broadcasts as bc
 import peers as pr
 import ast
-from threading import Thread
-
-TEST_RANDOM_DELAY = False
 
 
 class RelayProcessor:
@@ -14,7 +11,9 @@ class RelayProcessor:
         self.seen_bc = set()
         self.epoch = epoch
 
-    def handle_relay(self, alias: int, broadcast: str, ):
+    def handle_relay(
+        self, alias: int, broadcast: str,
+    ):
         """
         Stores the data associated with a valid relay
         
@@ -22,17 +21,25 @@ class RelayProcessor:
             relay (str): The valid relay to cache
             alias (int): The alias of the node that generated the broadcast within the relay
         """
-        if not bc.check_broadcast_validity(broadcast):
-            print("broadcast invalid")
-            return
-        # SHOULD ALSO CHECK FOR MALFEASANCE
-
+        # print('handling from', alias)
+        if self.epoch >= cfg.activation_epoch:
+            if not bc.check_broadcast_validity(broadcast):
+                print("broadcast invalid")
+                return
+            # SHOULD ALSO CHECK FOR 'MALFEASANCE'
+        else:
+            if not bc.verify_message_sig:
+                return
+        
         if broadcast not in self.seen_bc:
             self.seen_bc.add(broadcast)
+            msg=bc.split_broadcast(broadcast)['message']
+            if cfg.SHOW_RELAYS and msg != "test" and alias != cfg.ALIAS:
+                print(f"{alias}: {msg}")
             cm.gossip_msg(f"relay|{broadcast}", {alias})
 
     def request_seen_bc(self, alias):
-        '''send peer request for all seen broadcasts'''
+        """send peer request for all seen broadcasts"""
         Process(
             1,
             RelayProcessor.format_seen_bc_response,
@@ -43,28 +50,29 @@ class RelayProcessor:
             specific_peers=[alias],
         )
 
-    def fulfill_seen_bc_request(self,alias,request_id):
-        '''send seen broadcasts to peers'''
+    def fulfill_seen_bc_request(self, alias, request_id):
+        """send seen broadcasts to peers"""
         cm.send_peer_message(alias, f"query_fulfillment|{request_id}|{self.seen_bc}")
 
     @staticmethod
     def format_seen_bc_response(query, response):
-        '''format string to set'''
+        """format string to set"""
         received_seen_bc = ast.literal_eval(response)
         if type(received_seen_bc) is set:
             return received_seen_bc
 
     def conclude_seen_bc(self, process):
-        '''incorporate info from broadcast request'''
+        """incorporate info from broadcast request"""
         received_bc = process.cached_responses[0]
         for broadcast in received_bc:
             bc_data = bc.split_broadcast(broadcast)
             chain_commit = bc_data["chain_commit"]
             if (
                 not bc.check_broadcast_validity(broadcast)
-                or cfg.chain_commitment(self.epoch) != chain_commit
+                or cfg.epoch_chain_commit[self.epoch] != chain_commit
+                # or cfg.chain_commitment(self.epoch) != chain_commit
             ):
-                print("broadcast invalid")
+                print("broadcast invalid1")
                 received_bc.remove(broadcast)
                 pr.remove_peer(process.specific_peers[0])
 

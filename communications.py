@@ -9,7 +9,7 @@ import sched
 from threading import Thread
 import time
 
-TEST_RANDOM_DELAY = False
+
 s = sched.scheduler(time.time, time.sleep)
 
 
@@ -33,17 +33,14 @@ def receive_message(client_socket):
             return False
         message_length = int(message_header.decode("utf-8").strip())
         data = b""
-        message_length_p = message_length
         while message_length > 0:
             buffer = min(MAX_BUF, message_length)
-            new=b''
-            while len(new)<buffer:
-                new += client_socket.recv(buffer-len(new))
+            new = b""
+            while len(new) < buffer:
+                new += client_socket.recv(buffer - len(new))
             data += new
             message_length -= buffer
 
-
-        # print()
         data = data.decode("utf-8")
         return data
     except Exception as e:
@@ -124,7 +121,8 @@ def gossip_msg(msg: str, excluded=set()):
             msg (str): The message to be gossiped. Character limit is ??
             excluded (set): The set of all excluded nodes
         """
-    if TEST_RANDOM_DELAY is False:
+
+    if cfg.RANDOM_DELAY is False:
         for alias in cfg.peers.keys():
             if alias not in excluded:
                 send_peer_message(alias, msg)
@@ -133,11 +131,11 @@ def gossip_msg(msg: str, excluded=set()):
         for alias in cfg.peers.keys():
             if alias not in excluded:
                 # Adding a random time to test how peers handle this error
-                time = random.random() * 50
+                time = random.random() * 1.5+.4
                 s.enter(
-                    time, 0, send_peer_message(alias, msg), [alias, f"relay|{msg}"],
+                    time, 0, send_peer_message, argument=[alias, msg],
                 )
-        Thread(target=s.run).start()
+                Thread(target=s.run, name=f"gossip_{alias}").start()
 
 
 def originate_broadcast(message: str, parent=""):
@@ -148,8 +146,9 @@ def originate_broadcast(message: str, parent=""):
             message (str): A message to broadcast out to the Semaphore network. Size limit is ?? characters
             parent (str): An optional ID of a parent broadcast
         """
-    chain_com = cfg.chain_commitment(cfg.current_epoch, "ob")
-
+    chain_com = cfg.epoch_chain_commit[
+        cfg.current_epoch
+    ]  # cfg.chain_commitment(cfg.current_epoch, "ob")
     broadcast = bc.generate_broadcast(message, chain_com, parent)
     cfg.epoch_processes[cfg.current_epoch].processor.handle_relay(cfg.ALIAS, broadcast)
 

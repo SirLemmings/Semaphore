@@ -1,18 +1,19 @@
 import socket, json
 from alias_management import get_claimed_aliases
-import random
+import hashlib
 import time
+from bidict import bidict
 
-with open("params.json") as f:
+with open("params_test.json") as f:
     params = json.load(f)
 ALIAS_LEN = params["ALIAS_LEN"]
 SIG_LEN = params["SIG_LEN"]
 CHAIN_COMMIT_LEN = params["CHAIN_COMMIT_LEN"]
 INDICATOR_LEN = params["INDICATOR_LEN"]
 HEADER_LENGTH = params["HEADER_LENGTH"]
-TIME_BASE_OFFSET = params["TIME_BASE_OFFSET"]# + random.random() * 10
+TIME_BASE_OFFSET = params["TIME_BASE_OFFSET"]  # + random.random() * 10
 CLOCK_INTERVAL = params["CLOCK_INTERVAL"]
-EPOCH_LENGTH = params["EPOCH_LENGTH"]
+EPOCH_TIME = params["EPOCH_TIME"]
 SLACK_EPOCHS = params["SLACK_EPOCHS"]
 FORWARD_SLACK_EPOCHS = params["FORWARD_SLACK_EPOCHS"]
 TIME_SAMPLE_NUM = params["TIME_SAMPLE_NUM"]
@@ -33,8 +34,16 @@ VOTE_ROUND_TIME = params["VOTE_ROUND_TIME"]
 SYNC_EPOCHS = params["SYNC_EPOCHS"]
 MINIMUM_REORG_DEPTH = params["MINIMUM_REORG_DEPTH"]
 
+ENABLE_MANUAL_BC = True
+SEND_TEST_BC = True
+RANDOM_DELAY = True
+
+SHOW_RELAYS =True
+SHOW_BLOCK_INFO = True
+SHOW_EPOCH_INFO = True
+
 DELAY = SLACK_EPOCHS + VOTE_MAX_EPOCHS + FORWARD_SLACK_EPOCHS + SYNC_EPOCHS + 1
-CHAIN_COMMIT_LEN = 64 * DELAY
+
 
 ALIAS = 0
 IP = socket.gethostbyname(socket.gethostname() + ".local")
@@ -45,6 +54,7 @@ sk = 0
 alias_keys = get_claimed_aliases()
 
 peers = {}
+peers_activated = {}
 all_speaking = {}
 all_listening = {}
 
@@ -52,64 +62,106 @@ server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 network_offset = 0
 
-
-
+initialized = False
+committed_epoch = float("inf")
+synced = False
 activated = False
+activation_epoch = float("inf")
+enforce_chain = True
+
+chain_commit_offset = {}
 current_epoch = 0
 epoch_processes = {}
 finished_epoch_processes = set()
 staged_block_updates = []
+temp_staged_block_updates = []
 
-epoch_chain_commit = {}  # {chain_commit:epoch}
 
-GENESIS = range(DELAY * 2-1)
+resync = False
+
+epoch_chain_commit = bidict({})  # {epoch:chain_commit}
+
+GENESIS = range(DELAY * 2 - 1)
 blocks = {i: "GENESIS" for i in GENESIS}  # {epoch: block}
-epochs = [i * EPOCH_LENGTH for i in GENESIS]
-hashes = {i * EPOCH_LENGTH: str(i) for i in GENESIS}  # {epoch: hash}
-indexes = {i * EPOCH_LENGTH: i for i in GENESIS}  # {epoch: index}
+epochs = [i * EPOCH_TIME for i in GENESIS]
+hashes = bidict({i * EPOCH_TIME: str(i) for i in GENESIS})  # {epoch: hash}
+indexes = bidict({i * EPOCH_TIME: i for i in GENESIS})  # {epoch: index}
+
+
+temp_blocks = {}
+temp_epochs = []
+temp_hashes = bidict({})
+staged_sync_blocks = []
+
 
 def network_time():
     return time.time() + network_offset
 
+
 def chain_commitment(epoch, where=None):
+    # print(where)
+    if synced:
+        eps = epochs
+        hs = hashes
+    else:
+        eps = temp_epochs
+        hs = temp_hashes
+
     earliest_process_epoch = (
-        current_epoch
-        - (SLACK_EPOCHS + VOTE_MAX_EPOCHS + SYNC_EPOCHS) * EPOCH_LENGTH
+        current_epoch - (SLACK_EPOCHS + VOTE_MAX_EPOCHS + SYNC_EPOCHS) * EPOCH_TIME
     )
-    last_commit_epoch = epoch - DELAY * EPOCH_LENGTH
-    
-    if epoch not in epochs and epoch < earliest_process_epoch:
+    last_commit_epoch = epoch - DELAY * EPOCH_TIME
+
+    if epoch not in eps and epoch < earliest_process_epoch:
         print(epoch, earliest_process_epoch)
         raise Exception("skipped epoch")
     if last_commit_epoch > earliest_process_epoch:
-        print(epoch)
-        print(last_commit_epoch)
-        print(earliest_process_epoch)
+        # print(epoch)
+        # print(last_commit_epoch)
+        # print(earliest_process_epoch)
         raise Exception("insufficient blocks confirmed")
 
-    if epoch in epochs:
-        epoch_index = epochs.index(epoch)
-        committed_epochs = epochs[epoch_index-2*DELAY:epoch_index-DELAY]
-    elif last_commit_epoch in epochs:
-        last_index = epochs.index(last_commit_epoch)
-        committed_epochs = epochs[last_index - DELAY +1: last_index] + [
+    # if epoch in eps:
+    #     print('a')
+    #     epoch_index = eps.index(epoch)
+    #     committed_epochs = eps[epoch_index - 2 * DELAY : epoch_index - DELAY]
+    # print('~last',last_commit_epoch)
+    # for ep in eps:
+    #     print(ep)
+    #     print(ep==last_commit_epoch)
+    if last_commit_epoch in eps:
+        # print("b")
+        last_index = eps.index(last_commit_epoch)
+        committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
             last_commit_epoch
         ]
     else:
-        offset = int((current_epoch-epoch) / EPOCH_LENGTH + FORWARD_SLACK_EPOCHS)
-        committed_epochs = epochs[-DELAY - offset:]
+        # print("c")
+        # offset = int((current_epoch - epoch) / EPOCH_TIME + FORWARD_SLACK_EPOCHS)
+        if epoch in chain_commit_offset:
+            offset = chain_commit_offset[epoch]
+        else:
+            offset = 0
+        committed_epochs = eps[-DELAY - offset :]
         committed_epochs = committed_epochs[:DELAY]
 
     if len(committed_epochs) != DELAY:
-        raise Exception('shits fuckd')
+        raise Exception(f"uh oh wrong nuber of epoch {epoch}")
 
-    com_hashes = [hashes[epoch] for epoch in committed_epochs]
+    com_hashes = [hs[epoch] for epoch in committed_epochs]
     commitment = ""
     for com_hash in com_hashes:
         commitment += com_hash
-    return commitment.zfill(CHAIN_COMMIT_LEN)
-    
+    # print("~", hashlib.sha256(commitment.encode()).hexdigest(), commitment)
+    if where == "ep":
+        # print(committed_epochs)
+        # print([epoch for epoch in committed_epochs])
+        return (
+            hashlib.sha256(commitment.encode()).hexdigest(),
+            [epoch for epoch in committed_epochs],
+        )
+    # if where == 'ep':
+    # print(hashlib.sha256(commitment.encode()).hexdigest(), commitment)
 
-
-
+    return hashlib.sha256(commitment.encode()).hexdigest()
 
