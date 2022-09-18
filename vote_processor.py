@@ -1,14 +1,13 @@
 import ast
-
+import hashlib
 import config as cfg
 import communications as cm
 import broadcasts as bc
 import peers as pr
+import blocks as bk
 import sched, time
 from process import Process
 from threading import Thread
-
-import hashlib
 
 
 class VoteProcessor:
@@ -18,7 +17,7 @@ class VoteProcessor:
     Attributes:
     """
 
-    def __init__(self, epoch, seen_bc, execute=True):
+    def __init__(self, epoch, seen_bc):
         """
         Creates a VoteManager object using the parent Node object
 
@@ -29,20 +28,36 @@ class VoteProcessor:
         """
 
         self.epoch = epoch
-        self.execute = execute
+        self.execute = True
         self.broadcasts = {bc.calc_bcid(broadcast): broadcast for broadcast in seen_bc}
-        self.confs = {
-            bc.calc_bcid(broadcast): cfg.VOTE_INIT_CONF for broadcast in seen_bc
-        }
+        if self.epoch >= cfg.activation_epoch:
+            self.confs = {
+                bc.calc_bcid(broadcast): cfg.VOTE_INIT_CONF for broadcast in seen_bc
+            }
+        else:
+            self.confs = {bc.calc_bcid(broadcast): 0 for broadcast in seen_bc}
         self.count = 0
         self.vote_rounds = 0
         self.s = sched.scheduler(time.time, time.sleep)
-        Thread(target=self.execute_vote).start()
+        self.s.enter(0, 0, self.execute_vote)
+        self.pending_commits = set()
+        self.seen_commits = set()
+        self.rejected_commits = set()
+        self.rejected_bcids = set()
+        # self.s.run()
+        # Thread(target=self.execute_vote).start()
+        Thread(target=self.s.run, name=f"vote_{self.epoch}").start()
 
     def execute_vote(self):
+        # print("~vote")
+        # if not cfg.activated and self.epoch - cfg.current_epoch == -3:
+        # print(self.seen_commits)
+        # print(self.pending_commits)
+        # print()
+        self.requested_commits_this_round = set()
         if self.execute:
-            self.s.enter(cfg.VOTE_ROUND_TIME, 0, self.initiate_vote_update)
-            self.s.run()
+            self.s.enter(cfg.VOTE_ROUND_TIME, 0, self.execute_vote)
+            self.initiate_vote_update()
 
     def initiate_vote_update(self):
         """
@@ -61,11 +76,14 @@ class VoteProcessor:
             "vote_request",
             self.epoch,
             True,
+            specific_peers=cfg.peers_activated.copy(),
         )
+        # if not cfg.synced and cfg.current_epoch - self.epoch == 3: print(self.confs)
+        # self.execute_vote()
         # self.s.enter(cfg.VOTE_ROUND_TIME, 0, self.execute_vote)
         # self.s.run()
-        if len(cfg.peers) > 0:
-            self.execute_vote()
+        # if len(cfg.peers_activated) > 0:
+        #     self.execute_vote()
 
     def fulfill_vote_request(self, alias: int, request_id: str):
         """
@@ -76,17 +94,13 @@ class VoteProcessor:
             request_id (str): The ID of the request that was received
             epoch (int): The epoch of broadcasts to vote on
         """
-
-        if self.execute:
+        if self.epoch >= cfg.activation_epoch:
             acks = {bcid for bcid in self.broadcasts if self.confs[bcid] > 0}
             if acks == set():
                 acks = {}
             # print("~sending votes",acks)
-            commit = hashlib.sha256(
-                cfg.chain_commitment(self.epoch).encode("utf-8")
-            ).hexdigest()
             cm.send_peer_message(
-                alias, f"query_fulfillment|{request_id}|{[acks,commit]}",
+                alias, f"query_fulfillment|{request_id}|{acks}",
             )
 
     def request_missing_broadcast(self, alias: int, bcid: str):
@@ -125,13 +139,12 @@ class VoteProcessor:
     @staticmethod
     def format_vote_response(query, response):
         """format recieved string to set"""
-        blob = ast.literal_eval(response)
-        received_acks = blob[0]
-        commit = blob[1]
+        received_acks = ast.literal_eval(response)
+
         if received_acks == {}:
             received_acks = set()
         if type(received_acks) is set:
-            return received_acks, commit
+            return received_acks
 
     @staticmethod
     def format_bc_response(query, response):
@@ -155,24 +168,100 @@ class VoteProcessor:
             return
         if not bc.check_broadcast_validity_vote(broadcast, self.epoch):
             # print("~2")
+            self.rejected_bcids.add(bcid)
             return
-        self.broadcasts[bcid] = broadcast
+        commit = bc.split_broadcast(broadcast)["chain_commit"]
+        if cfg.synced:
+            if commit == cfg.epoch_chain_commit[self.epoch]:
+                self.broadcasts[bcid] = broadcast
+            else:
+                self.rejected_bcids.add(bcid)
+            # Check it is on your commit
+        elif cfg.enforce_chain:
+            if commit in self.seen_commits:
+                self.broadcasts[bcid] = broadcast
+            elif commit in self.rejected_commits:
+                self.rejected_bcids.add(bcid)
+            elif commit not in self.requested_commits_this_round:
+                self.request_history(alias)
+                self.pending_commits.add(commit)
+                self.requested_commits_this_round.add(commit)
+        else:
+            self.broadcasts[bcid] = broadcast
 
     def conclude_vote_process(self, process):
         """incorporate information for round of epoch vote"""
         # acks = process.cached_responses
-        acks = [i[0] for i in process.cached_responses]
-        commits = [i[1] for i in process.cached_responses]
-        own_commit = hashlib.sha256(
-            cfg.chain_commitment(self.epoch).encode("utf-8")
-        ).hexdigest()
-        acks = [ack for ack, commit in zip(acks, commits) if commit == own_commit]
+        acks = process.cached_responses
+        # if (
+        #     cfg.activated or cfg.enforce_chain
+        # ):  # TODO this should actually accept any commitment that is after minimum reorg depth and reorg if it is different but supported by epoch vote
+        #     if cfg.synced:
+        #         commits = [i[1] for i in process.cached_responses]
+        #         own_commit = cfg.epoch_chain_commit[self.epoch].encode("utf-8")
+        #         acks = [
+        #             ack for ack, commit in zip(acks, commits) if commit == own_commit
+        #         ]
+        #     else:
+        #         commits = [*set(commits)]
+        #         for commit in commits:
+        #             if commit not in self.seen_commits:
+        #                 #request headers proof
+        #                 pass
+
         # print(process.cached_responses)
-        # print(acks)
+        # if not cfg.synced and cfg.current_epoch - self.epoch == 3: print('~ACKS',acks)
         # print(commits)
         # print()
 
         self.epoch_vote(acks, process)
+
+    def request_history(self, alias):
+        # print("~request")
+        chain_tip_epoch = cfg.epochs[-1]
+        chain_tip_hash = cfg.hashes[chain_tip_epoch]
+
+        Process(
+            1,
+            VoteProcessor.format_history_response,
+            self.conclude_history_process,
+            "history_request",
+            (chain_tip_epoch, chain_tip_hash),
+            True,
+            specific_peers=[alias],
+        )
+
+    @staticmethod
+    def format_history_response(query, response):
+        """format received string to list of dicts"""
+        if response == "no_block":
+            return response
+        received_blocks = ast.literal_eval(response)
+        if type(received_blocks) is list:
+            for block in received_blocks:
+                if type(block) is not dict:
+                    return
+            return received_blocks
+
+    def conclude_history_process(self, process):
+        blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
+        for block in blocks:
+            if not block.check_block_valid():
+                print("bad block")
+                return
+        block_hashes = []
+        for block in blocks:
+            block_hashes.append(block.block_hash)
+            # print('~len',len(block_hashes))
+            if len(block_hashes) >= cfg.DELAY:
+                commitment = ""
+                for block_hash in block_hashes[-cfg.DELAY :]:
+                    commitment += block_hash
+                # print('~',hashlib.sha256(commitment.encode()).hexdigest(), commitment)
+                commitment = hashlib.sha256(commitment.encode()).hexdigest()
+
+                if commitment in self.pending_commits:
+                    self.seen_commits.add(commitment)
 
     def epoch_vote(self, acks, process):
         """
@@ -187,9 +276,7 @@ class VoteProcessor:
 
         acks_union = set.union(*acks)
         acks_union = set.union(acks_union, self.broadcasts)
-        # if cfg.current_epoch - self.epoch == 3:
-        # print("~union", acks_union)
-        # print('~bc', self.confs)
+
         peers_responded = process.peers_responded
         self.accomodate_missing_bc(acks_union, peers_responded)
 
@@ -197,12 +284,15 @@ class VoteProcessor:
         for peer_acks in acks:
             for bcid in peer_acks:
                 combined_acks[bcid] += 1
+        # if not cfg.synced and cfg.current_epoch - self.epoch == 3:
+        #     print('~comb',combined_acks)
         for bcid in combined_acks:
             if combined_acks[bcid] >= cfg.VOTE_CONSENSUS_LEVEL:
                 self.confs[bcid] += 1
             elif combined_acks[bcid] <= cfg.VOTE_SAMPLE_NUM - cfg.VOTE_CONSENSUS_LEVEL:
                 self.confs[bcid] -= 1
         self.vote_rounds += 1
+
         # TODO CHECK FOR DRIFT
 
     def terminate_vote(self):
@@ -212,7 +302,7 @@ class VoteProcessor:
         Parameters:
             epoch (int): The epoch of broadcasts that was voted on
         """
-
+        # print('~terminating',self.epoch)
         if self.execute:
             self.execute = False
             return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]
@@ -231,9 +321,9 @@ class VoteProcessor:
         """
         # print('~~',peers_responeded)
         for bcid in acks_union:
-            if bcid not in self.broadcasts:
+            if bcid not in self.broadcasts and bcid not in self.rejected_bcids:
                 self.confs[bcid] = cfg.VOTE_INIT_CONF_NEG - self.vote_rounds - 1
                 for alias in peers_responeded:
-                    if bcid in peers_responeded[alias][0]:
+                    if bcid in peers_responeded[alias]:
                         self.request_missing_broadcast(alias, bcid)
 
