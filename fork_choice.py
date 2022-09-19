@@ -11,7 +11,7 @@ import json
 reorg_processes=set()
 
 def request_fork_history(alias):
-    # print("~requesting")
+    print("~requesting")
     index = cfg.MINIMUM_REORG_DEPTH
     past_epochs = []
     while True:
@@ -24,8 +24,8 @@ def request_fork_history(alias):
     past_hashes = [
         cfg.hashes[epoch] for epoch in past_epochs if epoch > cfg.DELAY * 2 - 2
     ]
-    print(past_hashes)
-    print(past_epochs)
+    # print(past_hashes)
+    # print(past_epochs)
     Process(
         1,
         format_fork_request,
@@ -106,9 +106,9 @@ def conclude_fork_process(process):
 
     # swap = True
     swap = compare_weight(blocks.copy(), last_common_epoch)
-
+    print("~SWAP",swap)
     if swap:
-        print("~REORG!")
+        print("***REORG***")
         tm.deactivate()
         remove_history(last_common_epoch)
         for block in blocks:
@@ -123,6 +123,7 @@ def conclude_fork_process(process):
                 f.write(dump.encode("utf-8"))
         cfg.initialized = True
         cfg.enforce_chain = True
+        global reorg_processes
         reorg_processes = set()
     else:
         print("~no reorg")
@@ -271,6 +272,6 @@ def compare_weight(alt_blocks, last_common_epoch):
             break
 
     print(
-        f"~alt {len(chain_engagements_alt)}, current {len(chain_engagements_current)}"
+        f"~alternate_weight: {len(chain_engagements_alt)}, current_weight: {len(chain_engagements_current)}"
     )
     return len(chain_engagements_alt) > len(chain_engagements_current)

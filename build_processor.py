@@ -23,9 +23,9 @@ class BuildProcessor:
             return
         cs.add_block(self.block, self.epoch)
         if cfg.SHOW_BLOCK_INFO:
-            print("~hash", self.block.block_hash)
+            print("~block_hash:", self.block.block_hash)
             # print("~bkep", self.block["epoch_timestamp"])
             print(
-                "~len ",
+                "~chain_weight:",
                 len(self.block.bc_body) if self.block.bc_body != "None" else 0,
             )

@@ -13,7 +13,8 @@ def load_block_data(block):
     cfg.indexes[epoch] = block.block_index
     cfg.epochs.append(epoch)
     if epoch not in cfg.epoch_chain_commit:
-        cfg.epoch_chain_commit[epoch] = block.chain_commitment
+        cfg.epoch_chain_commit.forceput(epoch,block.chain_commitment)
+        # cfg.epoch_chain_commit[epoch] = block.chain_commitment
     for epoch in cfg.chain_commit_offset:
         if cfg.chain_commit_offset[epoch] > 0:
             cfg.chain_commit_offset[epoch] -= 1
