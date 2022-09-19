@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import socket
 import config as cfg
 import broadcasts as bc
@@ -6,7 +9,7 @@ import communications as cm
 import time
 
 
-def generate_config_msg(alias: int, peer_ip: str, peer_port: int):
+def generate_config_msg(alias: int, peer_ip: str, peer_port: int) -> str:
     """
     Generates a message used in connecting to a new peer containing alias and both's IP and port
     
@@ -22,7 +25,7 @@ def generate_config_msg(alias: int, peer_ip: str, peer_port: int):
     return msg
 
 
-def request_connection(peer_alias: int, peer_ip: str, peer_port: int):
+def request_connection(peer_alias: int, peer_ip: str, peer_port: int) -> None:
     """
     Requests another node to accept an outgoing connection
     
@@ -49,7 +52,7 @@ def request_connection(peer_alias: int, peer_ip: str, peer_port: int):
     print(f"requested connection to {peer_alias}, ({peer_ip}, {peer_port})")
 
 
-def handle_connection_request():
+def handle_connection_request() -> None:
     """
     Accepts an incomming connection and send a return outgoing connection if necessary
     
@@ -96,12 +99,18 @@ def handle_connection_request():
 
     print(f"accepted connection from {peer_alias}, {peer_address}")
 
-def signal_activation():
+def signal_activation() -> None:
+    """
+    Sends a signal to all peers indicated that the node has been activated
+    """
     # print('~signalin')
     for peer in cfg.peers:
         cm.send_peer_message(peer,'activate')
 
-def signal_deactivation():
+def signal_deactivation() -> None:
+    """
+    Sends a signal to all peers indicated that the node has been deactivated
+    """
     # print('~signalin')
     for peer in cfg.peers:
         cm.send_peer_message(peer,'deactivate')

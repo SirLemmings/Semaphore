@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import config as cfg
 import communications as cm
 import consensus as cs
@@ -10,7 +13,8 @@ import json
 
 reorg_processes=set()
 
-def request_fork_history(alias):
+def request_fork_history(alias: int) -> None:
+    """requests a fork history"""
     # print("~requesting")
     index = cfg.MINIMUM_REORG_DEPTH
     past_epochs = []
@@ -38,6 +42,7 @@ def request_fork_history(alias):
 
 
 def fulfill_fork_request(alias, query_id, past):
+    """fulfills a peer's fork request"""
     print("~fulfilling")
     if cfg.synced:
         if len(past[0])>0:#sometimes peer does not send any epochs because there arent enough epochs. this handles that case. might be worth fixing on the other end
@@ -69,6 +74,7 @@ def fulfill_fork_request(alias, query_id, past):
 
 
 def format_fork_request(query, response):
+    """formats a fork request to send to a peer"""
     print("~formatting")
     received_blocks = ast.literal_eval(response)
     if type(received_blocks) is list:
@@ -79,6 +85,7 @@ def format_fork_request(query, response):
 
 
 def conclude_fork_process(process):
+    """concludes the forking process"""
     print("~concluding")
     blocks = process.cached_responses[0]
     for block in blocks:
@@ -129,6 +136,7 @@ def conclude_fork_process(process):
 
 
 def remove_history(last_common_epoch):
+    """removes the history of the non-canonical chain"""
     index = cfg.epochs.index(last_common_epoch) + 1
     for epoch in cfg.epochs[index:]:
         del cfg.blocks[epoch]
@@ -208,6 +216,7 @@ def remove_history(last_common_epoch):
 
 
 def compare_weight(alt_blocks, last_common_epoch):
+    """compares the simple weight between two chains"""
     current_blocks = [
         block
         for block in [

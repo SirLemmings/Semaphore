@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import sched
 import time
 import random
@@ -8,9 +11,7 @@ import peers as pr
 class Query:
     """
     A class used to track and handle all of the node's open queries
-    
     """
-
     open_queries = {}
 
     def __init__(
@@ -55,18 +56,29 @@ class Query:
         Query.open_queries[self.id] = self
         self.send_query()
 
-    def delete(self):
+    def delete(self) -> None:
+        """
+        Deletes this query object
+        """
         del Query.open_queries[self.id]
 
-    def send_query(self):
-        """send message to peer with info for query"""
+    def send_query(self) -> None:
+        """
+        Sends a message to peer with info for query
+        """
         if self.send_data:
             cm.send_peer_message(self.peer_alias, f"{self.type}|{self.id}|{self.data}")
         else:
             cm.send_peer_message(self.peer_alias, f"{self.type}|{self.id}")
 
-    def process_query_response(self, response: str, peer_alias: int):
-        """process validate and format the response to query before sending to parent process"""
+    def process_query_response(self, response: str, peer_alias: int) -> None:
+        """
+        Processes, validates, and formats the response to query before sending to parent process
+        
+        Parameters:
+            response (str): The response received for this query
+            peer_alias (int): The alias of the peer that responded to this query
+        """
         if peer_alias != self.peer_alias:
             print(f"{peer_alias} is incorrect alias")
             pr.remove_peer(peer_alias)

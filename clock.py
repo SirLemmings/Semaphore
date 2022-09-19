@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import time
 
 from process import Process
@@ -95,7 +98,7 @@ def fulfill_time_request(alias: int, query_id: str) -> None:
 
 
 def format_response(query, response: str) -> float:
-    """converte reported time to offset"""
+    """Converts reported time to offset"""
     received_time = float(response)
     ping_correction = (time.time() - query.data) / 2
     offset = received_time + ping_correction - query.data

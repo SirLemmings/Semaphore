@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import blocks as bk
 import consensus as cs
 import blocks as bk

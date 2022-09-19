@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import hashlib
 from numpy import block
 
@@ -6,13 +9,17 @@ import config as cfg
 
 
 def sha_hash(preimage: str) -> str:
-    """Calculate the sha256 hash of a preimage"""
+    """
+    Calculate the sha256 hash of a preimage
+    """
     sha = hashlib.sha256
     return sha(preimage.encode()).hexdigest()
 
 
 def build_merkle_tree(data: list) -> list:
-    """builds a merkle tree from a list of elements"""
+    """
+    Builds a merkle tree from a list of elements
+    """
     if data == []:
         return []
 
@@ -36,7 +43,9 @@ def build_merkle_tree(data: list) -> list:
 
 
 def construct_merkle_proof(tree: list, item: str) -> tuple:
-    """constructs a merkle path for a item in the tree"""
+    """
+    Constructs a merkle path for a item in the tree
+    """
     if item not in tree[-1]:
         raise Exception(f"{item} not in data of {tree[0][0]}")
     data_index = tree[-1].index(item)
@@ -53,7 +62,9 @@ def construct_merkle_proof(tree: list, item: str) -> tuple:
 
 
 def verify_proof(proof: tuple) -> bool:
-    """verifies a merkle proof"""
+    """
+    Verifies a merkle proof
+    """
     item = proof[0]
     index = proof[1]
     path = proof[2]
@@ -69,7 +80,10 @@ def verify_proof(proof: tuple) -> bool:
 
 
 class Block:
-    def __init__(self, broadcasts=None, epoch=None, init_dict=None):
+    def __init__(self, broadcasts=None, epoch=None, init_dict=None) -> None:
+        """
+        Generates a valid block given a list of broadcasts valid in an epoch
+        """
         if init_dict is None:
             # prev_epoch = epoch - cfg.SYNC_EPOCHS
             # if prev_epoch not in cfg.epochs:

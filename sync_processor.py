@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import blocks as bk
 import communications as cm
 import consensus as cs

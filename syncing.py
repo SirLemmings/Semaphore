@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 from process import Process
 import config as cfg
 import blocks as bk

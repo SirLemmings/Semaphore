@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import sched
 import time
 import random
@@ -58,11 +61,16 @@ class Process:
 
         self.create_queries()
 
-    def delete(self):
+    def delete(self) -> None:
+        """
+        Deletes this process object
+        """
         del Process.open_processes[self.id]
 
-    def create_queries(self):
-        '''create query object for communicating with each peer of process'''
+    def create_queries(self) -> None:
+        """
+        Creates a query object for communicating with each peer of process
+        """
         if self.specific_peers is None:
             peers = cfg.peers.keys()
             sample_num = min(self.sample_num, len(peers))
@@ -85,8 +93,14 @@ class Process:
                 )
             )
 
-    def process_query(self, query, response):
-        '''process the response to a query'''
+    def process_query(self, query: Query, response: str) -> None:
+        """
+        Processes the response to a query
+
+        Parameters:
+            query (Query): The query object
+            response (str): The response returned from the query
+        """
         if query.peer_alias in self.peers_responded:
             print(f"peer {query.peer_alias} responded more than once")
             pr.remove_peer(query.peer_alias)

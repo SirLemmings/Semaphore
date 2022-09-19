@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import select
 import config as cfg
 import connections as cn
@@ -13,7 +16,7 @@ import time
 s = sched.scheduler(time.time, time.sleep)
 
 
-def receive_message(client_socket):
+def receive_message(client_socket) -> str:
     """
     Returns string of message with header removed
     
@@ -48,11 +51,14 @@ def receive_message(client_socket):
         return False
 
 
-def socket_events(interpret_msg_func):
+def socket_events(interpret_msg_func: function) -> None:
     """
     Executes necessary functions when a speaking socket is notified by a peer
     
     The event loop runs continuously on its own thread. 
+    
+    Parameters:
+        interpret_msg_func: The function used to interpret incoming messages
     """
     while True:
         read_sockets, _, exception_sockets = select.select(
@@ -81,7 +87,7 @@ def socket_events(interpret_msg_func):
             pr.remove_peer(socket=notified_socket)
 
 
-def send_peer_chat(alias, msg):
+def send_peer_chat(alias: int, msg: int) -> None:
     """
     Sends a message that appears in a peer's terminal
     
@@ -94,7 +100,7 @@ def send_peer_chat(alias, msg):
         cfg.peers[alias].listening.send(bc.format_message(msg))
 
 
-def send_peer_message(alias: int, message: str):
+def send_peer_message(alias: int, message: str) -> None:
     """
     Sends a string message to a peer after validating a connection with them
     
@@ -113,7 +119,7 @@ def send_peer_message(alias: int, message: str):
             print(e)
 
 
-def gossip_msg(msg: str, excluded=set()):
+def gossip_msg(msg: str, excluded=set()) -> None:
     """
         Sends a message to all peers, except those in the excluded set
         
@@ -138,7 +144,7 @@ def gossip_msg(msg: str, excluded=set()):
                 Thread(target=s.run, name=f"gossip_{alias}").start()
 
 
-def originate_broadcast(message: str, parent=""):
+def originate_broadcast(message: str, parent="") -> None:
     """
         Creates a properly formatted broadcast, adds to seen broadcasts and relays to peers
         
