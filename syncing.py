@@ -11,26 +11,30 @@ import json
 def request_history():
     chain_tip_epoch = cfg.epochs[-1]
     chain_tip_hash = cfg.hashes[chain_tip_epoch]
-    Process(
-        1,
-        format_history_response,
-        conclude_history_process,
-        "history_request",
-        (chain_tip_epoch, chain_tip_hash),
-        True,
-        specific_peers=cfg.peers_activated.copy()
+    for alias in cfg.peers_activated:
+        Process(
+            1,
+            format_history_response,
+            conclude_history_process,
+            "history_request",
+            (chain_tip_epoch, chain_tip_hash),
+            True,
+            specific_peers=[alias]
     )
     # print("~tip", chain_tip_epoch)
 
 
 def fulfill_history_request(alias, query_id, chain_tip_epoch, chain_tip_hash):
     """send block history to requesting peer"""
+    print("~fulfilling history")
     if chain_tip_epoch not in cfg.epochs:
         print("~no block from epoch", chain_tip_epoch)
+        cm.send_peer_message(alias, f"query_fulfillment|{query_id}|no_block")
         return
 
     if chain_tip_hash != cfg.hashes[chain_tip_epoch]:
         print("~block from alternate chain")
+        cm.send_peer_message(alias, f"query_fulfillment|{query_id}|no_block")
         return
 
     index = cfg.epochs.index(chain_tip_epoch) + 1
@@ -57,6 +61,9 @@ def conclude_history_process(process):
     """incorporate information from history request"""
     # print("~3GOT HISTORY")
     # start = time.time()
+    if process.cached_responses[0] == "no_block":
+        print('got no block')
+        return
     blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
     for block in blocks:
         if not block.check_block_valid():

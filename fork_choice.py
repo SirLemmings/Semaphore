@@ -24,8 +24,8 @@ def request_fork_history(alias):
     past_hashes = [
         cfg.hashes[epoch] for epoch in past_epochs if epoch > cfg.DELAY * 2 - 2
     ]
-    # print(past_hashes)
-    # print(past_epochs)
+    print(past_hashes)
+    print(past_epochs)
     Process(
         1,
         format_fork_request,

@@ -88,7 +88,7 @@ def add_block(block, epoch):
 
 
 def sync():
-    # print("~2 request")
+    print("~2 request")
     sy.request_history()
 
     # load_staged_updates(temp=True)

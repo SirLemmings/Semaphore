@@ -61,6 +61,7 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
+        print(len(cfg.staged_sync_blocks))
         # print("~CHAIN_COMMIT_LEN", len(cfg.epoch_chain_commit))
     # print((cfg.epoch_chain_commit.keys()))
     # print((cfg.epoch_chain_commit.values()))
@@ -70,14 +71,18 @@ def run_epoch():
     # print("~comit", sorted(cfg.epoch_chain_commit.keys()))
     # print()
     if cfg.initialized:
-        for epoch in cfg.epoch_processes:
-            cfg.epoch_processes[epoch].step()
+        try:
+            for epoch in cfg.epoch_processes:
+                cfg.epoch_processes[epoch].step()
 
-        if (
-            next_epoch not in cfg.epoch_processes
-        ):  # TODO do something better than this check
-            start_epoch_process(next_epoch)
-        # TODO verify the epoch processes are actually getting deleted now that this is removed
+            if (
+                next_epoch not in cfg.epoch_processes
+            ):  # TODO do something better than this check
+                start_epoch_process(next_epoch)
+        except RuntimeError as e:
+            print("IGNORING ERROR:")
+            print(e)
+        
 
         if cfg.current_epoch > 0:
 
@@ -87,7 +92,11 @@ def run_epoch():
                     cm.originate_broadcast("test")
 
             for epoch in cfg.finished_epoch_processes:
-                cfg.epoch_processes[epoch].kill_process()
+                try:
+                    cfg.epoch_processes[epoch].kill_process()
+                except KeyError as e:
+                    print('IGNORING ERROR:')
+                    print(e)
             cfg.finished_epoch_processes = set()
 
             cs.load_staged_updates()
