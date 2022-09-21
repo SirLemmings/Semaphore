@@ -93,9 +93,9 @@ def conclude_fork_process(process):
                 return
 
     for block in blocks:
+        last_common_epoch = cfg.DELAY * 2 - 2
         if block == "GENESIS":
             blocks = blocks[1:]
-            last_common_epoch = cfg.DELAY * 2 - 2
             continue
         block = bk.Block(init_dict=block)
         epoch = block.epoch_timestamp
@@ -137,6 +137,8 @@ def conclude_fork_process(process):
 def remove_history(last_common_epoch):
     index = cfg.epochs.index(last_common_epoch) + 1
     for epoch in cfg.epochs[index:]:
+        if cfg.blocks[epoch] == "GENESIS":
+            continue
         del cfg.blocks[epoch]
         del cfg.hashes[epoch]
         del cfg.indexes[epoch]
@@ -219,12 +221,14 @@ def compare_weight(alt_blocks, last_common_epoch):
         for block in [
             cfg.blocks[epoch]
             for epoch in cfg.epochs[cfg.epochs.index(last_common_epoch) + 1 :]
-        ]
+        ] if block != "GENESIS"
     ]
+   
     alt_blocks = [bk.Block(init_dict=block) for block in alt_blocks]
     if len(alt_blocks) == 0 or len(current_blocks) == 0:
         print("~uhhhhh", len(alt_blocks), len(current_blocks))
         return
+
     chain_engagements_alt = set()
     chain_engagements_current = set()
     shallow_block_alt = alt_blocks.pop(-1)
@@ -266,7 +270,12 @@ def compare_weight(alt_blocks, last_common_epoch):
                 time_current = -1
             else:
                 shallow_block_current = current_blocks.pop(-1)
-                time_current = shallow_block_current.epoch_timestamp
+                try:
+                    time_current = shallow_block_current.epoch_timestamp
+                except Exception as e:
+                    print(shallow_block_current)
+                    print(e)
+
             if len(alt_blocks) == 0:
                 time_alt = -1
             else:

@@ -62,7 +62,6 @@ def run_epoch():
         print()
         print("~EPOCH", cfg.current_epoch)
         print(len(cfg.staged_sync_blocks))
-        print(list(cfg.blocks.keys()))
         # print("~CHAIN_COMMIT_LEN", len(cfg.epoch_chain_commit))
     # print((cfg.epoch_chain_commit.keys()))
     # print((cfg.epoch_chain_commit.values()))

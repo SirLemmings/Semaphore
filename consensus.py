@@ -10,7 +10,8 @@ def load_block_data(block):
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
     cfg.hashes[epoch] = block.block_hash
-    cfg.indexes[epoch] = block.block_index
+    # cfg.indexes[epoch] = block.block_index
+    cfg.indexes.forceput(epoch,block.block_index)
     cfg.epochs.append(epoch)
     if epoch not in cfg.epoch_chain_commit:
         cfg.epoch_chain_commit.forceput(epoch, block.chain_commitment)

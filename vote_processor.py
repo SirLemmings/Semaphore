@@ -27,7 +27,7 @@ class VoteProcessor:
         Parameters: 
             parent (Node): The node object using this vote manager
         """
-        print("~SEEN NUM:",len(seen_bc))
+        print("~SEEN NUM",epoch, len(seen_bc))
         self.epoch = epoch
         self.execute = True
         self.broadcasts = {bc.calc_bcid(broadcast): broadcast for broadcast in seen_bc}
@@ -119,7 +119,10 @@ class VoteProcessor:
                 if type(received_acks) is set:
                     return received_acks
             else:
-                return 'wrong_commit'
+                print("wrong_commit", query.peer_alias)
+                print("other", commit)
+                print("corec", cfg.epoch_chain_commit[self.epoch])
+                return "wrong_commit"
         else:
             if received_acks == {}:
                 received_acks = set()
@@ -373,6 +376,7 @@ class VoteProcessor:
             epoch (int): The epoch of broadcasts that was voted on
         """
         # print('~terminating',self.epoch)
+        print("CONF NUM'", self.epoch, len([self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]))
         if self.execute:
             self.execute = False
             return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]

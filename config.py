@@ -150,7 +150,7 @@ def chain_commitment(epoch, where=None):
 
     if len(committed_epochs) != DELAY:
         raise Exception(f"uh oh wrong nuber of epoch {epoch}")
-
+    
     com_hashes = [hs[epoch] for epoch in committed_epochs]
     commitment = ""
     for com_hash in com_hashes:
