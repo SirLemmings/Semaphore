@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 import socket
 import config as cfg
 
@@ -57,14 +60,14 @@ class Peer:
                 # if e!= e.ENOTCONN:
                 #     print(e)
 
-    def update_listening(self, listening):
+    def update_listening(self, listening) -> None:
         """
         Updates all data on listening socket in sync
         """
         self.listening = listening
         cfg.all_listening[listening] = self.alias
 
-    def update_speaking(self, speaking):
+    def update_speaking(self, speaking) -> None:
         """
         Updates all data on speaking socket in sync
         """
@@ -72,11 +75,7 @@ class Peer:
         cfg.all_speaking[speaking] = self.alias
 
 
-
-
-
-
-def add_new_peer(alias: int):
+def add_new_peer(alias: int) -> None:
     """
     Creates a new peer object from a valid, unconnected peer
     
@@ -89,9 +88,7 @@ def add_new_peer(alias: int):
         cfg.peers[alias] = Peer(alias)
 
 
-def remove_peer(
-    alias=None, socket=None
-):  # THIS SHOULD CLOSE SOCKETS TOO ### WIAT, DOESNT THE PEER CLASS CLOSE THE SOCKET????
+def remove_peer(alias=None, socket=None) -> None: 
     """
     Removes peer from PeerManager.peers based on alias or socket
     
@@ -135,7 +132,7 @@ def full_connection(alias: int) -> bool:
     return True
 
 
-def fully_connected_peer_aliases():
+def fully_connected_peer_aliases() -> None:
     """
     Retreives the set of all peers with a full connection
     
@@ -144,10 +141,22 @@ def fully_connected_peer_aliases():
     peers = cfg.peers.copy()
     return {alias for alias in peers if cfg.full_connection(alias)}
 
-def activate_peer(alias:int):
+def activate_peer(alias: int):
+    """
+    Sets a specified peer's status as activated
+    
+    Parameters:
+        alias (int): A valid alias of the peer
+    """
     if alias in cfg.peers.keys():
         cfg.peers_activated[alias]=cfg.peers[alias]
 
-def deactivate_peer(alias:int):
+def deactivate_peer(alias: int):
+    """
+    Sets a specified peer's status as deactivated
+    
+    Parameters:
+        alias (int): A valid alias of the peer
+    """
     if alias in cfg.peers_activated:
         del cfg.peers_activated[alias]

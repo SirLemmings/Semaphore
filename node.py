@@ -1,4 +1,15 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+# Running this file will launch node processes on your device.
+
+# Packages included with python
 import os, errno, ast
+import time
+import json
+from optparse import OptionParser, Values
+from threading import Thread
+
+# Imports from natively defined packages
 import config as cfg
 import communications as cm
 import connections as cn
@@ -7,47 +18,66 @@ import peers as pr
 import clock as cl
 import timing as tm
 import broadcasts as bc
+from alias_management import get_pubkey
+from query import Query
 import blocks as bk
 import syncing as sy
 import fork_choice as fc
-
 # import reorgs as ro
-import time
-import json
-from alias_management import get_pubkey
-from query import Query
-from threading import Thread
 
 
 class Node:
+    """
+    A class that represents an individual node in the Semaphore network.
+    
+    The attributes of this class are tracked in config.py
+    """
     def __init__(self, alias: int, port: int):
+        """
+        Creates a Node at a an IP:port with a particular alias.
+
+        Initializing a node involves retrieving the public key,
+        binding a server socket to listen for new connections,
+        loading stored data on the previous blocks and the current blockchain,
+        and creates and runs separate threads for the node's processes.
+        
+        Parameters: 
+            alias (int): A valid alias for the node to use
+            port (int): Unused device port for the node to use
+        """
         cfg.ALIAS = int(alias)
         cfg.PORT = int(port)
 
+        # get keys
         with open("encrypted&secure_document.txt", "r") as f:
             key_dict = eval(f.read())
         cfg.pk = get_pubkey(cfg.ALIAS)
         cfg.sk = key_dict[cfg.pk]
 
+        # bind socket to listen for new connections
         cfg.server_socket.bind((cfg.IP, cfg.PORT))
         cfg.server_socket.listen()
 
+        # load folder of block data
         folder = str(cfg.ALIAS)
         if os.path.isdir(folder):
+            # retreive previous blocks
             block_files = [
                 file for file in os.listdir(folder) if file.endswith(".json")
             ]
             numbers = [int(name.split(".")[0]) for name in block_files]
             block_files = [file for _, file in sorted(zip(numbers, block_files))]
-
+            # load previous blocks
             for file in block_files:
                 name = os.path.join(f"./{folder}", f"{file}")
                 with open(name, "rb") as f:
                     block = bk.Block(init_dict=json.load(f))
                     cs.load_block_data(block)
         else:
+            # create folder for block data
             os.mkdir(f"{cfg.ALIAS}")
 
+        # create threads for socket communication, running commands, and running time processes
         t_socket = Thread(
             target=cm.socket_events, args=[self.interpret_message], name="socket"
         )
@@ -68,7 +98,6 @@ class Node:
         # Use | as delimeter for message information
         data = msg.split("|")
         # TODO HANDLE SPLITTING MORE ELEGANTLY
-        # NOT SURE WHAT CASE THIS IS HANDLING - OSCAR
         if len(data) > 2:
             if data[-2][-1] == "\\":
                 join = data[-2] + data[-1]
@@ -168,7 +197,17 @@ class Node:
                         fc.reorg_processes.add(chain_commit)
                         fc.request_fork_history(alias)
 
-    def execute_process(self, epoch: int, state: str, process: str, alias: int, *args):
+    def execute_process(self, epoch: int, state: str, process: str, alias: int, *args) -> None:
+        """
+        Executes the process corresponding to the query response that was received.
+
+        Parameters:
+            epoch (int): The epoch corresponding to the query's process
+            state (str): The state of the process that the query corresponds to
+            process (str): The id of the process to execute
+            alias (int): The alias of the peer that fulfilled the query
+            *args: any additional arguments that correspond to the process (such as a query ID)
+        """
         if epoch in cfg.epoch_processes.keys():
             epoch_processor = cfg.epoch_processes[epoch]
             epoch_processor.execute_new_process(state, process, alias, *args)
@@ -180,9 +219,9 @@ class Node:
 
     def commands(self):
         """
-        Input manual commands when not in testing mode.
+        Starts an infinite loop that handles the input of manual commands.
         
-        The following are the supported commands and arguments.
+        The following are supported commands and arguments.
         
         - connect: Attempts to connect with a specified peer node
         Arguments:
@@ -190,12 +229,18 @@ class Node:
             peer_ip (str or int): IP address of the peer node
             peer_port (int): device port that the peer is using
         
-        - see_peers: Displays all peers connected to the node
+        - fc: Connect to local peers, used for testing
+
+        - see_peers: Displays all peers connected to the node (only their aliases)
+
+        - see_peers_active: See peers with activated aliases
+
+        - see_peer_sockets: Displays all peers, all listening sockets, and all speaking sockets
 
         - chat: sends a direct message to a peer with a specified alias
         Arguments:
             alias (int): valid alias of a connected peer
-            message (str): message to send to peer. Character limit is ??
+            message (str): message to send to peer.
 
         - remove: Removes a connected peer with a specified alias
         Arguments:
@@ -203,13 +248,21 @@ class Node:
 
         - exit: Halts the node's processes and exits the Semaphore network
 
-        - epoch: Displays the Semaphore network's current epoch according to the node's time
+        - time_synch: Manually initiates an update the node's network time and displays it
 
-        - time_synch: Displays the node's network time after sampling peers
+        - init: initializes a network and blockchain from scratch
 
-        - broadcast: Broadcasts a message to the Semaphore network
+        - activate: activates a node into a previously connected network
+
+        - deactivate: deactivates a node, saving the current chain state
+
+        - get_alt: gets the fork history from a specified peer
         Arguments:
-            msg (str): The message to be broadcast. Character limit is ??
+            peer_alias (int): valid alias of the peer request from
+
+        # - broadcast: Broadcasts a message to the Semaphore network (NOT CURRENTLY IMPLEMENTED)
+        # Arguments:
+        #     msg (str): The message to be broadcast.
 
         - badcast (str): Creates and distributes an invalid broadcast to test the network
         """

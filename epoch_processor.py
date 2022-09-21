@@ -1,3 +1,6 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 from relay_processor import RelayProcessor
 from vote_processor import VoteProcessor
 from build_processor import BuildProcessor
@@ -15,7 +18,10 @@ FINALIZE_DELAY = (
 
 
 class EpochProcessor:
-    """class that handles the processing of everything for a particular epoch. makes a child processor for each stage of epoch processing"""
+    """
+    This class handles the processing of everything for a particular epoch.
+    and makes a child processor for each stage of epoch processing
+    """
 
     def __init__(self, epoch):
         self.epoch = epoch
@@ -43,8 +49,10 @@ class EpochProcessor:
 
             # print('~true', self.epoch, cfg.epoch_chain_commit[self.epoch])
 
-    def step(self):
-        """update processor at the end of each epoch"""
+    def step(self) -> None:
+        """
+        Update processor at the end of each epoch
+        """
 
         # try:
         #     print(
@@ -104,7 +112,10 @@ class EpochProcessor:
         self.staged_cached_processes = []
         self.execute_cached_processes()
 
-    def kill_process(self):
+    def kill_process(self) -> None:
+        """
+        Kills the process object
+        """
         if self.state == "vote":
             self.processor.execute = False
         self.processor = None
@@ -114,8 +125,10 @@ class EpochProcessor:
     #     """remove from memory"""
     #     cfg.finished_epoch_processes.add(self.epoch)
 
-    def execute_new_process(self, state, func, *args):
-        """respond to a message from a peer. if it should be processed next epoch then it is cached"""
+    def execute_new_process(self, state, func, *args) -> None:
+        """
+        Respond to a message from a peer. if it should be processed next epoch then it is cached
+        """
         if state == self.state:
             func = self.find_func(func)
             func(*args)
@@ -124,8 +137,10 @@ class EpochProcessor:
                 {"state": state, "func": func, "args": args}
             )
 
-    def execute_cached_processes(self):
-        """execute all valid processes, delete otherwise"""
+    def execute_cached_processes(self) -> None:
+        """
+        Execute all valid processes, delete otherwise
+        """
         for process in self.cached_processes:
             state = process["state"]
             func = process["func"]
@@ -134,8 +149,10 @@ class EpochProcessor:
                 func = self.find_func(func)
                 func(*args)
 
-    def find_func(self, func):
-        """given the type of process return the correct function of child processor"""
+    def find_func(self, func) -> function:
+        """
+        Given the type of process return the correct function of child processor
+        """
         if func == "block_request":
             func = self.processor.fulfill_block_request
         if func == "relay":

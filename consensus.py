@@ -1,11 +1,18 @@
-import config as cfg
-import blocks as bk
+# Author: Alex Dulisse
+# Version: 0.4.1
+# This file manages the consensus mechanisms for a node in the Semaphore network
+
+# Packages included with python
 import json
 import os
+
+# Imports from natively defined packages
+import config as cfg
+import blocks as bk
 import syncing as sy
 
 
-def load_block_data(block):
+def load_block_data(block) -> None:
     """send block data to memory"""
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
@@ -21,7 +28,7 @@ def load_block_data(block):
             cfg.chain_commit_offset[epoch] -= 1
 
 
-def temp_load_block_data(block):
+def temp_load_block_data(block) -> None:
     """send block data to memory"""
     epoch = block.epoch_timestamp
     cfg.temp_blocks[epoch] = block
@@ -63,8 +70,16 @@ def stage_history_update(block,):
     cfg.staged_block_updates.append(block)
 
 
-def add_block(block, epoch):
-    """add a block to the chain"""
+def add_block(block: bk.Block, epoch: int) -> None:
+    """
+        Adds the block to the chain.
+
+        This function writes the finalized block to a json file.
+
+        Parameters:
+            block (Block): The block object to add 
+            epoch (int): The epoch of the block
+        """
     block_epoch = block.epoch_timestamp
 
     if cfg.synced:
@@ -89,6 +104,7 @@ def add_block(block, epoch):
 
 
 def sync():
+    """syncs a node with its peers"""
     print("~2 request")
     sy.request_history()
 
@@ -96,7 +112,8 @@ def sync():
     # cfg.synced = True
 
 
-def sync_func(blocks):
+def sync_func(blocks: dict(bk.Block)) -> None:
+    """the function governing syncing rules and behaviors"""
     # print('~c com',sorted(cfg.epoch_chain_commit.keys()))
     # print('~own  ',cfg.epochs)
     # print('~got  ',[block.epoch_timestamp for block in blocks])

@@ -1,9 +1,12 @@
+# Author: Alex Dulisse
+# Version: 0.4.1
+
 from ecdsa import SigningKey, VerifyingKey, keys, SECP256k1
 import hashlib
 import config as cfg
 
 
-def generate_broadcast(message: str, chain_commit: str, parent=""):
+def generate_broadcast(message: str, chain_commit: str, parent="") -> str:
     """
     Returns a properly formatted broadcast string for the current epoch
 
@@ -23,7 +26,7 @@ def generate_broadcast(message: str, chain_commit: str, parent=""):
     return broadcast
 
 
-def calc_sig(msg: str):
+def calc_sig(msg: str) -> str:
     """
     Generates a valid signature for the given msg using sk
 
@@ -38,7 +41,7 @@ def calc_sig(msg: str):
     return sig.hex()
 
 
-def sign_msg(msg: str):
+def sign_msg(msg: str) -> str:
     """
     Returns a valid signature appended to signed message
     
@@ -55,7 +58,7 @@ def sign_msg(msg: str):
     return msg
 
 
-def format_message(msg):
+def format_message(msg) -> str:
     """
     Retreives bytes formatted for broadcasting with a proper header
     
@@ -71,7 +74,7 @@ def format_message(msg):
     return header + message
 
 
-def verify_message_sig(message):
+def verify_message_sig(message) -> bool:
     """
     Checks the validity of a properly formatted message
 
@@ -134,7 +137,7 @@ def check_broadcast_validity_vote(broadcast, vote_epoch) -> bool:
         return verify_message_sig(broadcast)
 
 
-def split_broadcast(broadcast: str):
+def split_broadcast(broadcast: str) -> dict:
     """
     Splits a broadcast into its constituent parts
     
