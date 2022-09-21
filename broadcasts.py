@@ -93,41 +93,46 @@ def verify_message_sig(message):
         pubkey.verify(signature, sig_image)
         return True
     except keys.BadSignatureError:
-        return False
-
-
-def check_broadcast_validity(broadcast,)->bool:
-    """checks that a broadcast breaks no network rules"""
-    if not verify_message_sig(broadcast):
         print("invalid signature")
         return False
 
-    #CHECK IN RIGHT EPOCH
-    bc_data = split_broadcast(broadcast)
-    chain_commit = bc_data["chain_commit"]
-    if chain_commit not in cfg.epoch_chain_commit.keys():
-        # print('invalid epoch')
-        return False
-    epoch = cfg.epoch_chain_commit[chain_commit]
-    if epoch < cfg.current_epoch - cfg.SLACK_EPOCHS * cfg.EPOCH_LENGTH:
-        # print('invalid epoch')
-        return False
-    if epoch > cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_LENGTH:
-        # print('invalid epoch')
-        return False
-    return True
 
-#This repeats code with check_proadcast_validity
-def check_broadcast_validity_vote(broadcast,vote_epoch)->bool:
+def check_broadcast_validity(broadcast,) -> bool:
     """checks that a broadcast breaks no network rules"""
-    if not verify_message_sig(broadcast):
-        print("invalid signature")
+    try:
+        bc_data = split_broadcast(broadcast)
+    except:
         return False
+    chain_commit = bc_data["chain_commit"]
+    if chain_commit not in cfg.epoch_chain_commit.inverse.keys():
+        print("invalid 1")
+        print(chain_commit)
+        print(cfg.epoch_chain_commit.inverse.keys())
+        return False
+    epoch = cfg.epoch_chain_commit.inverse[chain_commit]
+    if epoch < cfg.current_epoch - cfg.SLACK_EPOCHS * cfg.EPOCH_TIME:
+        print("invalid 2")
+        return False
+    if epoch > cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME:
+        print("invalid 3")
+        return False
+    return verify_message_sig(broadcast)
+
+
+def check_broadcast_validity_vote(broadcast, vote_epoch) -> bool:
+    """checks that a broadcast breaks no network rules"""
     bc_data = split_broadcast(broadcast)
     chain_commit = bc_data["chain_commit"]
-    if chain_commit != cfg.chain_commitment(vote_epoch):
-        return False
-    return True
+    # if vote_epoch > cfg.committed_epoch:
+    if cfg.activated:
+        if (
+            chain_commit != cfg.epoch_chain_commit[vote_epoch]
+        ):  # cfg.chain_commitment(vote_epoch):
+            return False
+        return verify_message_sig(broadcast)
+    else:
+        return verify_message_sig(broadcast)
+
 
 def split_broadcast(broadcast: str):
     """
@@ -162,13 +167,16 @@ def split_broadcast(broadcast: str):
         indicator = int(indicator)
         parent, message = broadcast[:indicator], broadcast[indicator:]
     except Exception as e:
-        print("~STUFF:")
-        print("orig", orig)
-        print(alias)
-        print(indicator)
-        print(parent)
-        print(message)
-        print(e)
+        try:
+            print("~STUFF:")
+            print("orig", orig)
+            print(alias)
+            print(indicator)
+            print(parent)
+            print(message)
+            print(e)
+        except:
+            raise Exception("broadcast incorrectly formatted")
     return {
         "alias": alias,
         "chain_commit": chain_commit,

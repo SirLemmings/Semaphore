@@ -1,13 +1,17 @@
 from relay_processor import RelayProcessor
 from vote_processor import VoteProcessor
-from sync_processor import SyncProcessor
+from build_processor import BuildProcessor
 import config as cfg
+import connections as cn
+import broadcasts as bc
 
-EPOCH_VOTE_DELAY = (cfg.SLACK_EPOCHS) * cfg.EPOCH_LENGTH
-SYNC_DELAY = (cfg.VOTE_MAX_EPOCHS + cfg.SLACK_EPOCHS) * cfg.EPOCH_LENGTH
+EPOCH_VOTE_DELAY = (cfg.FORWARD_SLACK_EPOCHS + cfg.SLACK_EPOCHS) * cfg.EPOCH_TIME
+BUILD_DELAY = (
+    cfg.VOTE_MAX_EPOCHS + cfg.SLACK_EPOCHS + cfg.FORWARD_SLACK_EPOCHS
+) * cfg.EPOCH_TIME
 FINALIZE_DELAY = (
-    cfg.SYNC_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SLACK_EPOCHS
-) * cfg.EPOCH_LENGTH
+    cfg.SYNC_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SLACK_EPOCHS + cfg.FORWARD_SLACK_EPOCHS
+) * cfg.EPOCH_TIME
 
 
 class EpochProcessor:
@@ -17,47 +21,82 @@ class EpochProcessor:
         self.epoch = epoch
         self.cached_processes = []
         self.staged_cached_processes = []
-        if self.time_alive > SYNC_DELAY:
-            self.state = "sync"
-            self.processor = SyncProcessor(self.epoch, None)
-        elif self.time_alive > EPOCH_VOTE_DELAY:
-            self.state = "vote"
-            self.processor = VoteProcessor(self.epoch, set(), False)
-        else:
-            self.state = "relay"
-            self.processor = RelayProcessor(self.epoch)
+        self.processor = RelayProcessor(self.epoch)
+        self.state = "relay"
+        self.time_alive = 0
 
-        if self.epoch not in cfg.epoch_chain_commit:
-            cfg.epoch_chain_commit[cfg.chain_commitment(self.epoch, "ep")] = self.epoch
+        # if self.epoch >= cfg.activation_epoch:
+        if epoch >= cfg.committed_epoch:
+            # print('process',self.epoch,cfg.chain_commitment(self.epoch, "ep"))
+            # print(self.epoch)
+            # print(cfg.chain_commitment(self.epoch, where="ep")[0])
+            print("~new commit:", cfg.chain_commitment(self.epoch,where='ep'))
+            try:
+                cfg.epoch_chain_commit[self.epoch], self.test = cfg.chain_commitment(
+                    self.epoch, where="ep"
+                )
+            except Exception as e:
+                print()
+                print("~", cfg.epoch_chain_commit)
+                print()
+                raise e
 
-    def __del__(self):
-        #deactivate seems not to work to turn off vote processors so this function added
-        try:
-            self.processor.execute = False
-        except:
-            pass
-        self.processor = None
-
-    @property
-    def time_alive(self):
-        """epochs since current epoch"""
-        return cfg.current_epoch - self.epoch
+            # print('~true', self.epoch, cfg.epoch_chain_commit[self.epoch])
 
     def step(self):
         """update processor at the end of each epoch"""
+
+        # try:
+        #     print(
+        #         cfg.chain_commitment(
+        #             self.epoch,
+        #             where="ep"
+        #         )[1]
+        #     )
+        #     print(self.test)
+        # except:
+        #     print('-')
+
+        # print()
+
+        self.time_alive += cfg.EPOCH_TIME
         if self.time_alive == FINALIZE_DELAY:
             # print("~done delay", self.epoch)
+
             self.processor.finalize_block()
-            self.delete_reference()
-        elif self.time_alive == SYNC_DELAY:
+            cfg.finished_epoch_processes.add(self.epoch)
+            if self.epoch == cfg.activation_epoch - cfg.EPOCH_TIME:
+                cn.signal_activation()
+                cfg.activated = True
+                cfg.enforce_chain = True
+                print("***ACTIVATED***")
+        elif self.time_alive == BUILD_DELAY:
             # print("~sync delay", self.epoch)
             confirmed_bc = self.processor.terminate_vote()
+            if cfg.SHOW_CONF_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
+                print("CONFIRMED BROADCASTS:")
+                output = []
+                for i in confirmed_bc:
+                    alias = bc.split_broadcast(i)["alias"]
+                    bcid = bc.calc_bcid(i)
+                    output.append((alias, bcid))
+                for i in sorted(output):
+                    print(f"{i[0]}: {i[1]}")
             # print('~done terminate')
-            self.processor = SyncProcessor(self.epoch, confirmed_bc)
+            self.processor = BuildProcessor(self.epoch, confirmed_bc)
             self.state = "sync"
         elif self.time_alive == EPOCH_VOTE_DELAY:
             # print("~vote delay", self.epoch)
             seen_bc = self.processor.seen_bc
+            if cfg.SHOW_SEEN_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
+                print("SEEN BROADCASTS:")
+                output = []
+                for i in seen_bc:
+                    alias = bc.split_broadcast(i)["alias"]
+                    bcid = bc.calc_bcid(i)
+                    output.append((alias, bcid))
+                for i in sorted(output):
+                    print(f"{i[0]}: {i[1]}")
             # print("~seen bc:",len(seen_bc))
             self.processor = VoteProcessor(self.epoch, seen_bc)
             self.state = "vote"
@@ -65,9 +104,15 @@ class EpochProcessor:
         self.staged_cached_processes = []
         self.execute_cached_processes()
 
-    def delete_reference(self):
-        """remove from memory"""
-        cfg.finished_epoch_processes.add(self.epoch)
+    def kill_process(self):
+        if self.state == "vote":
+            self.processor.execute = False
+        self.processor = None
+        del cfg.epoch_processes[self.epoch]
+
+    # def delete_reference(self):
+    #     """remove from memory"""
+    #     cfg.finished_epoch_processes.add(self.epoch)
 
     def execute_new_process(self, state, func, *args):
         """respond to a message from a peer. if it should be processed next epoch then it is cached"""

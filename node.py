@@ -7,13 +7,16 @@ import peers as pr
 import clock as cl
 import timing as tm
 import broadcasts as bc
-import reorgs as ro
+import blocks as bk
+import syncing as sy
+import fork_choice as fc
+
+# import reorgs as ro
 import time
 import json
 from alias_management import get_pubkey
 from query import Query
 from threading import Thread
-from sync_processor import InitSyncProcessor
 
 
 class Node:
@@ -40,19 +43,19 @@ class Node:
             for file in block_files:
                 name = os.path.join(f"./{folder}", f"{file}")
                 with open(name, "rb") as f:
-                    block = json.load(f)
+                    block = bk.Block(init_dict=json.load(f))
                     cs.load_block_data(block)
         else:
             os.mkdir(f"{cfg.ALIAS}")
 
-        t_socket = Thread(target=cm.socket_events, args=[self.interpret_message])
-        t_command = Thread(target=self.commands)
-        t_timing = Thread(target=tm.time_events)
+        t_socket = Thread(
+            target=cm.socket_events, args=[self.interpret_message], name="socket"
+        )
+        t_command = Thread(target=self.commands, name="commands")
+        t_timing = Thread(target=tm.time_events, name="timing")
         t_socket.start()
         t_command.start()
         t_timing.start()
-
-        self.sync = InitSyncProcessor()
 
     def interpret_message(self, msg: str, alias: int):
         """
@@ -74,6 +77,12 @@ class Node:
 
         if msg_type == "chat":
             print(data[1])
+
+        elif msg_type == "activate":
+            pr.activate_peer(alias)
+
+        elif msg_type == "deactivate":
+            pr.deactivate_peer(alias)
 
         elif msg_type == "time_request":
             query_id = data[1]
@@ -113,35 +122,61 @@ class Node:
             chain_tip_info = ast.literal_eval(data[2])
             chain_tip_epoch, chain_tip_hash = chain_tip_info
             chain_tip_epoch = int(chain_tip_epoch)
-            self.sync.fulfill_history_request(alias, query_id, chain_tip_epoch,chain_tip_hash)
+            Thread(
+                target=sy.fulfill_history_request,
+                args=[alias, query_id, chain_tip_epoch, chain_tip_hash],
+                name="history_fulfill",
+            ).start()
+            # sy.fulfill_history_request(
+            #     alias, query_id, chain_tip_epoch, chain_tip_hash
+            # )
 
         elif msg_type == "fork_request":
             query_id = data[1]
-            alt_past_commits = ast.literal_eval(data[2])
-            ro.fulfill_fork_request(alias, query_id, alt_past_commits)
+            alt_past = ast.literal_eval(data[2])
+            fc.fulfill_fork_request(alias, query_id, alt_past)
 
-        elif msg_type == "relay" and cfg.activated:
+        elif msg_type == "relay":
             broadcast = data[1]
-            bc_data = bc.split_broadcast(broadcast)
+            try:
+                bc_data = bc.split_broadcast(broadcast)
+            except:
+                return
             chain_commit = bc_data["chain_commit"]
             # print('~chain commit:',chain_commit)
-            if chain_commit in cfg.epoch_chain_commit.keys():
-                epoch = cfg.epoch_chain_commit[chain_commit]
-                self.execute_process(epoch, "relay", "relay", alias, broadcast)
 
-            else:
-                print("~broadcast not in valid epoch")
-            # TODO HANDLE ALTERNATE CHAIN
+            # if cfg.current_epoch > cfg.committed_epoch:
+            if cfg.synced:
+
+                if chain_commit in cfg.epoch_chain_commit.inverse.keys():
+                    epoch = cfg.epoch_chain_commit.inverse[chain_commit]
+                    # if (
+                    #     cfg.SHOW_RELAYS
+                    #     and epoch in cfg.epoch_processes
+                    #     and cfg.epoch_processes[epoch].state != "relay"
+                    # ):
+                    #     msg = bc.split_broadcast(broadcast)["message"]
+                    #     if msg != "test":
+                    #         print(f"INVALID TIME: {alias}: {msg}")
+                    self.execute_process(epoch, "relay", "relay", alias, broadcast)
+
+                elif cfg.activated:
+                    print("~broadcast not in valid epoch")
+                    # print('~',chain_commit)
+                    # print('~',cfg.epoch_chain_commit.keys())
+                    if chain_commit not in fc.reorg_processes and cfg.activated:
+                        fc.reorg_processes.add(chain_commit)
+                        fc.request_fork_history(alias)
 
     def execute_process(self, epoch: int, state: str, process: str, alias: int, *args):
         if epoch in cfg.epoch_processes.keys():
             epoch_processor = cfg.epoch_processes[epoch]
             epoch_processor.execute_new_process(state, process, alias, *args)
-        else:
-            print(
-                "~epoch not in keys", alias, process, epoch, cfg.epoch_processes.keys()
-            )
-            # pr.remove_peer(alias)
+        # else:
+        #     print(
+        #         "~epoch not in keys", alias, process, epoch, cfg.epoch_processes.keys()
+        #     )
+        # pr.remove_peer(alias)
 
     def commands(self):
         """
@@ -180,7 +215,7 @@ class Node:
         """
         while True:
             try:
-                command = input("command: ")
+                command = input()
                 if command == "connect":
                     alias = int(input("peer_alias: "))
                     ip = input("peer_ip: ")
@@ -194,9 +229,17 @@ class Node:
                         print("refused")
                         if e.errno == errno.ECONNREFUSED:
                             pass
-
+                elif command == "fc":
+                    for i in range(10):
+                        if i not in cfg.peers and i != cfg.ALIAS:
+                            try:
+                                cn.request_connection(i, str(cfg.IP), f"{i}" * 4)
+                            except:
+                                pass
                 elif command == "see_peers":
                     print(cfg.peers.keys())
+                elif command == "see_peers_active":
+                    print(cfg.peers_activated.keys())
 
                 elif command == "see_peer_sockets":
                     print(cfg.peer_manager.peers)
@@ -219,25 +262,51 @@ class Node:
                     cl.initiate_time_update()
                     time.sleep(0.1)
                     print(cfg.network_time())
+                elif command == "init":
+                    if not cfg.initialized:
+                        tm.initialize()
+                    else:
+                        print("already initialiazed")
+
                 elif command == "activate":
-                    if not cfg.activated:
-                        tm.activate()
+                    if not cfg.initialized:
+                        cfg.initialized = True
+                        cfg.committed_epoch = cfg.current_epoch
+                        cfg.synced = True
+                        cfg.activated = True
+                        cfg.enforce_chain = True
+                        cfg.activation_epoch = cfg.current_epoch
+                        epochs = [
+                            epoch
+                            for epoch in range(
+                                cfg.current_epoch
+                                + cfg.EPOCH_TIME * (cfg.FORWARD_SLACK_EPOCHS),
+                                cfg.current_epoch
+                                + cfg.EPOCH_TIME
+                                * (cfg.FORWARD_SLACK_EPOCHS + cfg.DELAY - 1),
+                                cfg.EPOCH_TIME,
+                            )
+                        ]
+                        delays = [i for i in range(cfg.DELAY - 1, 0, -1)]
+                        cfg.chain_commit_offset = {e: d for e, d in zip(epochs, delays)}
+                        cn.signal_activation()
                     else:
                         print("already activated")
                 elif command == "deactivate":
-                    if  cfg.activated:
+                    if cfg.activated:
                         tm.deactivate()
                     else:
                         print("not activated")
-                elif command == "sync":
-                    if not cfg.activated:
-                        self.sync = InitSyncProcessor()
-                    else:
-                        print("already activated")
+                # elif command == "sync":
+                #     if not cfg.activated:
+                #         # self.sync = InitSyncProcessor()
+                #         pass
+                #     else:
+                #         print("already activated")
 
                 elif command == "get_alt":
                     alias = int(input("peer_alias: "))
-                    ro.request_fork_history(alias)
+                    fc.request_fork_history(alias)
                 elif (
                     command == "badcast"
                 ):  # SEND MESSAGE WITH BAD SIGNATURE FOR TESTING
@@ -255,6 +324,11 @@ class Node:
                             broadcast
                         )
                     self.peer_manager.gossip_msg(f"relay|{broadcast}")
+                elif cfg.ENABLE_MANUAL_BC and len(command) >= 1:
+                    try:
+                        cm.originate_broadcast(command)
+                    except:
+                        pass
 
             except EOFError:
                 os._exit(0)
