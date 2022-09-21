@@ -187,7 +187,7 @@ epoch_processes = {} # {epoch: open process}
 finished_epoch_processes = set()
 
 # The finalized block that is currently staged for addition to the history at the end of the epoch
-staged_block_updates = None
+staged_block_updates = []
 
 # Dictionary of blocks that are being held before adding to the chain
 temp_staged_block_updates = []
@@ -196,7 +196,7 @@ temp_staged_block_updates = []
 resync = False
 
 # The epochs that each of the node's chain commitments belong to
-epoch_chain_commit = {}  # {chain_commit: epoch}
+epoch_chain_commit = bidict({})  # {chain_commit: epoch}
 
 # The epoch of the genesis block
 GENESIS = range(DELAY * 2 - 1)

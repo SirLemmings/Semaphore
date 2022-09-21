@@ -51,7 +51,7 @@ def receive_message(client_socket) -> str:
         return False
 
 
-def socket_events(interpret_msg_func: function) -> None:
+def socket_events(interpret_msg_func) -> None:
     """
     Executes necessary functions when a speaking socket is notified by a peer
     

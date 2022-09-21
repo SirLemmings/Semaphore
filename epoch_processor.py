@@ -149,7 +149,7 @@ class EpochProcessor:
                 func = self.find_func(func)
                 func(*args)
 
-    def find_func(self, func) -> function:
+    def find_func(self, func):
         """
         Given the type of process return the correct function of child processor
         """

@@ -112,7 +112,7 @@ def sync():
     # cfg.synced = True
 
 
-def sync_func(blocks: dict(bk.Block)) -> None:
+def sync_func(blocks: dict) -> None:
     """the function governing syncing rules and behaviors"""
     # print('~c com',sorted(cfg.epoch_chain_commit.keys()))
     # print('~own  ',cfg.epochs)
