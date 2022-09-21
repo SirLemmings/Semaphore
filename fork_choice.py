@@ -49,7 +49,8 @@ def fulfill_fork_request(alias, query_id, past):
         else:
             past_hashes = past[0]
             past_epochs = past[0]
-        index = cfg.DELAY * 2 - 2 #NOTE is this really supposed to be a magic number
+        index = cfg.DELAY * 2 - 2 
+        print('~index',index)
         for block_hash in past_hashes[1:]:
             if block_hash in cfg.epoch_chain_commit.keys():
                 shared_epoch = past_epochs[past_hashes.index(block_hash)]
@@ -60,6 +61,7 @@ def fulfill_fork_request(alias, query_id, past):
                 break
 
         history_epochs = cfg.epochs[index:]
+        print('~start epoch',cfg.epochs[index+1])
         history_blocks = []
         for epoch in history_epochs:
             block = cfg.blocks[epoch]

@@ -13,7 +13,7 @@ def load_block_data(block):
     cfg.indexes[epoch] = block.block_index
     cfg.epochs.append(epoch)
     if epoch not in cfg.epoch_chain_commit:
-        cfg.epoch_chain_commit.forceput(epoch,block.chain_commitment)
+        cfg.epoch_chain_commit.forceput(epoch, block.chain_commitment)
         # cfg.epoch_chain_commit[epoch] = block.chain_commitment
     for epoch in cfg.chain_commit_offset:
         if cfg.chain_commit_offset[epoch] > 0:
@@ -133,7 +133,9 @@ def sync_func(blocks):
     # print(cfg.epochs[-8:])
     # print(cfg.temp_epochs[-8:])
 
-    cfg.activation_epoch = cfg.current_epoch + cfg.EPOCH_TIME
+    cfg.activation_epoch = (
+        cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
+    )
     cfg.synced = True
     for epoch in cfg.epoch_processes.keys():
         cfg.epoch_chain_commit[epoch] = cfg.chain_commitment(epoch)

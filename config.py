@@ -85,7 +85,7 @@ resync = False
 epoch_chain_commit = bidict({})  # {epoch:chain_commit}
 
 GENESIS = range(DELAY * 2 - 1)
-blocks = {i: "GENESIS" for i in GENESIS}  # {epoch: block}
+blocks = {i * EPOCH_TIME: "GENESIS" for i in GENESIS}  # {epoch: block}
 epochs = [i * EPOCH_TIME for i in GENESIS]
 hashes = bidict({i * EPOCH_TIME: str(i) for i in GENESIS})  # {epoch: hash}
 indexes = bidict({i * EPOCH_TIME: i for i in GENESIS})  # {epoch: index}

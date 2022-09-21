@@ -146,7 +146,7 @@ class Node:
             # print('~chain commit:',chain_commit)
 
             # if cfg.current_epoch > cfg.committed_epoch:
-            if cfg.activated:
+            if cfg.synced:
 
                 if chain_commit in cfg.epoch_chain_commit.inverse.keys():
                     epoch = cfg.epoch_chain_commit.inverse[chain_commit]
@@ -160,7 +160,7 @@ class Node:
                     #         print(f"INVALID TIME: {alias}: {msg}")
                     self.execute_process(epoch, "relay", "relay", alias, broadcast)
 
-                else:
+                elif cfg.activated:
                     print("~broadcast not in valid epoch")
                     # print('~',chain_commit)
                     # print('~',cfg.epoch_chain_commit.keys())

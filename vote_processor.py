@@ -27,6 +27,7 @@ class VoteProcessor:
         Parameters: 
             parent (Node): The node object using this vote manager
         """
+        print("~SEEN NUM:",len(seen_bc))
         self.epoch = epoch
         self.execute = True
         self.broadcasts = {bc.calc_bcid(broadcast): broadcast for broadcast in seen_bc}
