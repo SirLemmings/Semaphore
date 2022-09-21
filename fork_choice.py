@@ -11,7 +11,7 @@ import json
 reorg_processes=set()
 
 def request_fork_history(alias):
-    print("~requesting")
+    print("~requesting fork")
     index = cfg.MINIMUM_REORG_DEPTH
     past_epochs = []
     while True:
@@ -38,21 +38,23 @@ def request_fork_history(alias):
 
 
 def fulfill_fork_request(alias, query_id, past):
-    print("~fulfilling")
+    print("~fulfilling fork")
     if cfg.synced:
         if len(past[0])>0:#sometimes peer does not send any epochs because there arent enough epochs. this handles that case. might be worth fixing on the other end
             past_hashes = past[0]
             past_epochs = past[1]
             if past_hashes[0] in cfg.hashes.values():
+                print('reorg not deep enough')
                 return
         else:
             past_hashes = past[0]
             past_epochs = past[0]
-        index = cfg.DELAY * 2 - 2
+        index = cfg.DELAY * 2 - 2 #NOTE is this really supposed to be a magic number
         for block_hash in past_hashes[1:]:
             if block_hash in cfg.epoch_chain_commit.keys():
                 shared_epoch = past_epochs[past_hashes.index(block_hash)]
                 if cfg.hashes[shared_epoch] != block_hash:
+                    print("hash/epoch dont match")
                     return
                 index = cfg.epochs.index(shared_epoch)
                 break
@@ -65,11 +67,12 @@ def fulfill_fork_request(alias, query_id, past):
                 history_blocks.append(block)
             else:
                 history_blocks.append(block.convert_to_dict())
+        print('fulfilled fork successfully')
         cm.send_peer_message(alias, f"query_fulfillment|{query_id}|{history_blocks}")
 
 
 def format_fork_request(query, response):
-    print("~formatting")
+    print("~formatting fork")
     received_blocks = ast.literal_eval(response)
     if type(received_blocks) is list:
         for block in received_blocks:
@@ -79,7 +82,7 @@ def format_fork_request(query, response):
 
 
 def conclude_fork_process(process):
-    print("~concluding")
+    print("~concluding fork")
     blocks = process.cached_responses[0]
     for block in blocks:
         if type(block) is bk.Block:

@@ -1,4 +1,5 @@
 import ast
+from cgi import test
 import hashlib
 import config as cfg
 import communications as cm
@@ -71,7 +72,7 @@ class VoteProcessor:
         """
         Process(
             cfg.VOTE_SAMPLE_NUM,
-            VoteProcessor.format_vote_response,
+            self.format_vote_response,
             self.conclude_vote_process,
             "vote_request",
             self.epoch,
@@ -99,24 +100,42 @@ class VoteProcessor:
             if acks == set():
                 acks = {}
             # print("~sending votes",acks)
+            commit = cfg.epoch_chain_commit[self.epoch]
             cm.send_peer_message(
-                alias, f"query_fulfillment|{request_id}|{acks}",
+                alias, f"query_fulfillment|{request_id}|{[acks,commit]}",
             )
 
-    @staticmethod
-    def format_vote_response(query, response):
+    # @staticmethod
+    def format_vote_response(self, query, response):
         """format recieved string to set"""
-        received_acks = ast.literal_eval(response)
-
-        if received_acks == {}:
-            received_acks = set()
-        if type(received_acks) is set:
-            return received_acks
+        response = ast.literal_eval(response)
+        received_acks = response[0]
+        commit = response[1]
+        if cfg.synced and (cfg.activated or cfg.enforce_chain):
+            if commit == cfg.epoch_chain_commit[self.epoch]:
+                if received_acks == {}:
+                    received_acks = set()
+                if type(received_acks) is set:
+                    return received_acks
+            else:
+                return 'wrong_commit'
+        else:
+            if received_acks == {}:
+                received_acks = set()
+            if type(received_acks) is set:
+                return received_acks
+        # if received_acks == {}:
+        #     received_acks = set()
+        # if type(received_acks) is set:
+        #     return received_acks
 
     def conclude_vote_process(self, process):
         """incorporate information for round of epoch vote"""
-        #TODO ***RIGHT NOW PEERS ARE REJECTED BY GIVING BROADCASTS FROM A DIFFERENT CHAIN. IT IS PROBABLY BEST IF ACKS THEMSELVES ARE REJECTED
-        acks = process.cached_responses
+        # TODO ***RIGHT NOW PEERS ARE REJECTED BY GIVING BROADCASTS FROM A DIFFERENT CHAIN. IT IS PROBABLY BEST IF ACKS THEMSELVES ARE REJECTED
+        acks = [i for i in process.cached_responses if i != "wrong_commit"]
+
+        # print(self.fukpyton==process.cached_responses)
+
         # if (
         #     cfg.activated or cfg.enforce_chain
         # ):  # TODO this should actually accept any commitment that is after minimum reorg depth and reorg if it is different but supported by epoch vote
@@ -163,7 +182,7 @@ class VoteProcessor:
                 combined_acks[bcid] += 1
         # if not cfg.synced and cfg.current_epoch - self.epoch == 3:
         #     print('~comb',combined_acks)
-        print("~acks", len(acks))
+        # print("~acks", len(acks))
         for bcid in combined_acks:
             if sufficient_samples:
                 if combined_acks[bcid] >= cfg.VOTE_CONSENSUS_LEVEL:
@@ -256,11 +275,11 @@ class VoteProcessor:
         if cfg.synced:
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 self.broadcasts[bcid] = broadcast
-                print('is good',bcid)
+                print("is good", bcid)
             else:
                 self.rejected_bcids.add(bcid)
                 self.rejected_peers.add(alias)
-                print('is bad',bcid)
+                print("is bad", bcid)
                 print(commit)
                 print(cfg.epoch_chain_commit[self.epoch])
             # Check it is on your commit
@@ -280,7 +299,7 @@ class VoteProcessor:
             self.broadcasts[bcid] = broadcast
 
     def request_history(self, alias):
-        print("~r hist",alias)
+        print("~r hist", alias)
         chain_tip_epoch = cfg.epochs[-1]
         chain_tip_hash = cfg.hashes[chain_tip_epoch]
 
@@ -304,7 +323,7 @@ class VoteProcessor:
             for block in received_blocks:
                 if type(block) is not dict:
                     return
-            print('got history')
+            print("got history")
             return received_blocks
 
     def conclude_history_process(self, process):
@@ -321,9 +340,9 @@ class VoteProcessor:
                 print("bad block")
                 return
         block_hashes = []
-        test_count=0
+        test_count = 0
         for block in blocks:
-            test_count+=1
+            test_count += 1
             block_hashes.append(block.block_hash)
             # print('~len',len(block_hashes))
             commitment = ""
@@ -337,12 +356,13 @@ class VoteProcessor:
                     print("ACCEPT HISTORY")
                     self.seen_commits.add(commitment)
                     return
-        print("~REJECT HISTORY")
-        print("counted", test_count)
-        self.rejected_commits.add(commitment)
-        alias = list(process.peers_responded.keys())[0]
-        print("~h-peer", alias)
-        self.rejected_peers.add(alias)
+        if test_count > 0:
+            print("~REJECT HISTORY")
+            print("counted", test_count)
+            self.rejected_commits.add(commitment)
+            alias = list(process.peers_responded.keys())[0]
+            print("~h-peer", alias)
+            self.rejected_peers.add(alias)
 
     def terminate_vote(self):
         """

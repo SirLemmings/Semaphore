@@ -30,9 +30,17 @@ class EpochProcessor:
             # print('process',self.epoch,cfg.chain_commitment(self.epoch, "ep"))
             # print(self.epoch)
             # print(cfg.chain_commitment(self.epoch, where="ep")[0])
-            cfg.epoch_chain_commit[self.epoch], self.test = cfg.chain_commitment(
-                self.epoch, where="ep"
-            )
+            print("~new commit:", cfg.chain_commitment(self.epoch))
+            try:
+                cfg.epoch_chain_commit[self.epoch], self.test = cfg.chain_commitment(
+                    self.epoch, where="ep"
+                )
+            except Exception as e:
+                print()
+                print("~", cfg.epoch_chain_commit)
+                print()
+                print(e)
+
             # print('~true', self.epoch, cfg.epoch_chain_commit[self.epoch])
 
     def step(self):
