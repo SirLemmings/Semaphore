@@ -8,6 +8,21 @@ Connecting to other nodes (in your local network) via the "connect" command will
 
 Connected nodes will send test mesages each second and will save blocks to a file with the alias as its name.
 
-To initialize a node the "activate" command should be used if the node is starting the blockchain from scratch or has no peers. To activate a node that is connected to at least one peer, the "sync" command should be used.
+To initialize a node the "activate" command should be used if the node is starting the blockchain from scratch or has no peers. To activate a node that is connected to at least one peer, the "init" command should be used.
+
+Anything written to the terminal will be broadcasted unless it is a command.
+
+Full list of commands is:
+
+"connect": establish a symetric connection with a peer
+"see_peers": show all peer aliases
+"see_peers_active": show all activated peer aliases
+"see_peers_sockets": show all peer sockets
+"chat": send a message to the console of a peer
+"remove": disconnect from a peer
+"exit": elegantly close the node
+"time_sync": update and display network time
+"init": initialize/activate a node with peers
+"activate": bootstrap network without peers
 
 Beware of bugs.
