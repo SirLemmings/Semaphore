@@ -10,8 +10,8 @@ def main() -> None:
     for alias in range(demo_network["size"]):
         out_file = open('node' + str(alias) + 'out.txt', "w")
         err_file = open('node' + str(alias) + 'err.txt', "w")
-        proc1 = subprocess.Popen("python demo_node.py " + str(alias), shell = True, stdout = out_file, stderr=err_file)
-        subprocesses.append(proc1)
+        process = subprocess.Popen("python demo_node.py " + str(alias), shell = True, stdout = out_file, stderr=err_file)
+        subprocesses.append(process)
         out_file.close()
         err_file.close()
     while True:
