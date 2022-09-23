@@ -30,7 +30,7 @@ class EpochProcessor:
             # print('process',self.epoch,cfg.chain_commitment(self.epoch, "ep"))
             # print(self.epoch)
             # print(cfg.chain_commitment(self.epoch, where="ep")[0])
-            print("~new commit:", cfg.chain_commitment(self.epoch,where='ep'))
+            # print("~new commit:", cfg.chain_commitment(self.epoch,where='ep'))
             try:
                 cfg.epoch_chain_commit[self.epoch], self.test = cfg.chain_commitment(
                     self.epoch, where="ep"

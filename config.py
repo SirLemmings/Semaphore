@@ -71,6 +71,7 @@ synced = False
 activated = False
 activation_epoch = float("inf")
 enforce_chain = True
+sync_blocks_staged = False
 
 chain_commit_offset = {}
 current_epoch = 0

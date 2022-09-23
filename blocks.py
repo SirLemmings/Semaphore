@@ -71,33 +71,21 @@ def verify_proof(proof: tuple) -> bool:
 class Block:
     def __init__(self, broadcasts=None, epoch=None, init_dict=None):
         if init_dict is None:
-            # prev_epoch = epoch - cfg.SYNC_EPOCHS
-            # if prev_epoch not in cfg.epochs:
-            #     past_epochs = [epoch for epoch in cfg.epochs if epoch < prev_epoch]
-            #     prev_epoch = max(past_epochs)
-            # self.block_index = cfg.indexes[prev_epoch] + cfg.SYNC_EPOCHS + cfg.SYNC_EPOCHS+1-cfg.chain_commit_offset
-            # print('~iiiiiiiiiiiiiiiiiiiiiiiii',self.block_index,cfg.chain_commit_offset,cfg.DELAY)
-            # if not cfg.synced:
-            #     self.block_index = -1
-            # if cfg.synced:
-            #     print(cfg.chain_commit_offset)
-            #     self.block_index=len(cfg.epochs)+cfg.SYNC_EPOCHS+1-cfg.chain_commit_offset
-            # else:
-            #     self.block_index=-1
             data = [bc.split_broadcast(broadcast) for broadcast in broadcasts]
             # if epoch > cfg.committed_epoch:
             if cfg.activated:
-                self.chain_commitment = cfg.epoch_chain_commit[epoch]#cfg.chain_commitment(epoch, "bk")
+                self.chain_commitment = cfg.epoch_chain_commit[
+                    epoch
+                ]  # cfg.chain_commitment(epoch, "bk")
                 # print(epoch, self.chain_commitment)
             else:
                 # try:
-                self.chain_commitment = data[0]['chain_commit']
+                self.chain_commitment = data[0]["chain_commit"]
                 # except Exception as e:
                 #     print('~',e)
                 #     print(data)
             self.epoch_timestamp = epoch
 
-            
             alias_list = [bc["alias"] for bc in data]
             bc_data = [bc["sig_image"] for bc in data]
             bc_data = [
@@ -126,7 +114,9 @@ class Block:
 
             # ***SANITYCHECK***
             if True:
-                commit = self.chain_commitment#cfg.chain_commitment(epoch, "bb").zfill(cfg.CHAIN_COMMIT_LEN)
+                commit = (
+                    self.chain_commitment
+                )  # cfg.chain_commitment(epoch, "bb").zfill(cfg.CHAIN_COMMIT_LEN)
                 # print('~bb',commit)
                 commits = [bc["chain_commit"] for bc in data]
                 commits = set(commits)
@@ -148,8 +138,11 @@ class Block:
             self.sig_root = init_dict["sig_root"]
             self.bc_body = init_dict["bc_body"]
             self.sig_body = init_dict["sig_body"]
+
     def update_index(self):
-        self.block_index=len(cfg.epochs)
+        self.block_index = len(cfg.indexes)
+        
+
     @property
     def block_hash(self) -> str:
         """calculates the hash of a block"""

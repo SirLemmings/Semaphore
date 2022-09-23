@@ -27,7 +27,7 @@ class VoteProcessor:
         Parameters: 
             parent (Node): The node object using this vote manager
         """
-        print("~SEEN NUM",epoch, len(seen_bc))
+        # print("~SEEN NUM",epoch, len(seen_bc))
         self.epoch = epoch
         self.execute = True
         self.broadcasts = {bc.calc_bcid(broadcast): broadcast for broadcast in seen_bc}
@@ -119,9 +119,9 @@ class VoteProcessor:
                 if type(received_acks) is set:
                     return received_acks
             else:
-                print("wrong_commit", query.peer_alias)
-                print("other", commit)
-                print("corec", cfg.epoch_chain_commit[self.epoch])
+                # print("wrong_commit", query.peer_alias)
+                # print("other", commit)
+                # print("corec", cfg.epoch_chain_commit[self.epoch])
                 return "wrong_commit"
         else:
             if received_acks == {}:
@@ -225,7 +225,7 @@ class VoteProcessor:
             bcid (str): The ID of the missing broadcast
             epoch (int): The epoch that the missing broadcast belongs to 
         """
-        print(f"~request {alias} {bcid}")
+        # print(f"~request {alias} {bcid}")
         # print("~request missing")
         Process(
             1,
@@ -289,13 +289,13 @@ class VoteProcessor:
             # Check it is on your commit
         elif cfg.enforce_chain:
             if commit in self.seen_commits:
-                print(f"~accept {alias} {bcid}")
+                # print(f"~accept {alias} {bcid}")
                 self.broadcasts[bcid] = broadcast
             elif commit in self.rejected_commits:
-                print(f"~reject {alias} {bcid}")
+                # print(f"~reject {alias} {bcid}")
                 self.rejected_bcids.add(bcid)
             elif commit not in self.requested_commits_this_round:
-                print(f"~histry {alias} {bcid}")
+                # print(f"~histry {alias} {bcid}")
                 self.request_history(alias)
                 self.pending_commits.add(commit)
                 self.requested_commits_this_round.add(commit)
@@ -376,7 +376,7 @@ class VoteProcessor:
             epoch (int): The epoch of broadcasts that was voted on
         """
         # print('~terminating',self.epoch)
-        print("CONF NUM'", self.epoch, len([self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]))
+        # print("CONF NUM'", self.epoch, len([self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]))
         if self.execute:
             self.execute = False
             return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]

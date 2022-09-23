@@ -10,10 +10,13 @@ def load_block_data(block):
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
     cfg.hashes[epoch] = block.block_hash
-    # cfg.indexes[epoch] = block.block_index
-    cfg.indexes.forceput(epoch,block.block_index)
+    print('~new index', epoch,block.block_index)
+    cfg.indexes[epoch] = block.block_index
+    
+    # cfg.indexes.forceput(epoch,block.block_index)
     cfg.epochs.append(epoch)
     if epoch not in cfg.epoch_chain_commit:
+        # print('~add cc', epoch, cfg.epoch_chain_commit)
         cfg.epoch_chain_commit.forceput(epoch, block.chain_commitment)
         # cfg.epoch_chain_commit[epoch] = block.chain_commitment
     for epoch in cfg.chain_commit_offset:
@@ -41,7 +44,7 @@ def load_staged_updates():
     else:
         for block in cfg.staged_block_updates:
             temp_load_block_data(block)
-
+    cfg.sync_blocks_staged = False
     cfg.staged_block_updates = []
 
 
@@ -109,6 +112,7 @@ def sync_func(blocks):
         epoch = block.epoch_timestamp
         if epoch in cfg.temp_epochs:
             break
+        print("b sent")
         load_block_data(block)
         # print(block.epoch_timestamp)
         # cfg.epoch_chain_commit[epoch] = block.chain_commitment
@@ -117,11 +121,14 @@ def sync_func(blocks):
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
     i = 0
+    print(cfg.indexes)
     for block in [cfg.temp_blocks[epoch] for epoch in cfg.temp_epochs]:
         i += 1
         # print(i)
         block.update_index()
         epoch = block.epoch_timestamp
+
+        print("b_made")
         load_block_data(block)
         # cfg.epoch_chain_commit[epoch] = block.chain_commitment
         dump = json.dumps(block.convert_to_dict())
