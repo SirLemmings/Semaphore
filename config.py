@@ -4,7 +4,7 @@ import hashlib
 import time
 from bidict import bidict
 
-with open("params_test.json") as f:
+with open("params.json") as f:
     params = json.load(f)
 ALIAS_LEN = params["ALIAS_LEN"]
 SIG_LEN = params["SIG_LEN"]
