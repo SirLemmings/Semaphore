@@ -15,7 +15,7 @@ class BuildProcessor:
             self.block = bk.Block(self.broadcasts, self.epoch)
         else:
             print("~EMPTY BLOCK")
-            self.block = None#bk.Block({}, self.epoch)
+            self.block = None
 
     def finalize_block(self):
         """add final block to chain"""
@@ -24,7 +24,6 @@ class BuildProcessor:
         cs.add_block(self.block, self.epoch)
         if cfg.SHOW_BLOCK_INFO:
             print("~block_hash:", self.block.block_hash)
-            # print("~bkep", self.block["epoch_timestamp"])
             print(
                 "~chain_weight:",
                 len(self.block.bc_body) if self.block.bc_body != "None" else 0,

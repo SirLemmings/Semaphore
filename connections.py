@@ -97,11 +97,9 @@ def handle_connection_request():
     print(f"accepted connection from {peer_alias}, {peer_address}")
 
 def signal_activation():
-    # print('~signalin')
     for peer in cfg.peers:
         cm.send_peer_message(peer,'activate')
 
 def signal_deactivation():
-    # print('~signalin')
     for peer in cfg.peers:
         cm.send_peer_message(peer,'deactivate')

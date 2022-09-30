@@ -76,7 +76,6 @@ class Query:
             print("errr", e)
             print("type", self.type)
             print("func", self.format_query_function)
-            # print("resp", response)
             print("response formatted incorrectly")
             pr.remove_peer(peer_alias)
             return

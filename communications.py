@@ -130,7 +130,6 @@ def gossip_msg(msg: str, excluded=set()):
     else:
         for alias in cfg.peers.copy():
             if alias not in excluded:
-                # Adding a random time to test how peers handle this error
                 time = (random.random() * 2.2 + 3) * (cfg.ALIAS != 1)
                 s.enter(
                     time, 0, send_peer_message, argument=[alias, msg],
@@ -149,7 +148,7 @@ def originate_broadcast(message: str, parent=""):
     try:
         chain_com = cfg.epoch_chain_commit[
             cfg.current_epoch
-        ]  # cfg.chain_commitment(cfg.current_epoch, "ob")
+        ] 
     except:
         print('uhh')
         return

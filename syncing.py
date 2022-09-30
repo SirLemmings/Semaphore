@@ -21,7 +21,6 @@ def request_history():
             True,
             specific_peers=[alias],
         )
-    # print("~tip", chain_tip_epoch)
 
 
 def fulfill_history_request(alias, query_id, chain_tip_epoch, chain_tip_hash):
@@ -42,11 +41,7 @@ def fulfill_history_request(alias, query_id, chain_tip_epoch, chain_tip_hash):
     index = cfg.epochs.index(chain_tip_epoch) + 1
     history_epochs = cfg.epochs[index:]
     history_blocks = [cfg.blocks[epoch].convert_to_dict() for epoch in history_epochs]
-    # print("~sent", history_blocks)
     cm.send_peer_message(alias, f"query_fulfillment|{query_id}|{history_blocks}")
-
-    # for block in history_blocks:
-    #     print('sent index', block['epoch_timestamp'], block['block_index'])
 
 
 def format_history_response(query, response):
@@ -64,8 +59,6 @@ def format_history_response(query, response):
 def conclude_history_process(process):
     # TODO!!!!MUST MAKE SURE THAT BLOCKS DONT GET ADDED MULTIPLE TIMES BY MULTIPLE PROCESSES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     """incorporate information from history request"""
-    # print("~3GOT HISTORY")
-    # start = time.time()
     if process.cached_responses[0] == "no_block":
         print("got no block")
         return

@@ -107,23 +107,19 @@ class Block:
                 self.sig_body = "None"
 
             # ***SANITYCHECK***
-            if True:
-                commit = (
-                    self.chain_commitment
-                )  # cfg.chain_commitment(epoch, "bb").zfill(cfg.CHAIN_COMMIT_LEN)
-                # print('~bb',commit)
-                commits = [bc["chain_commit"] for bc in data]
-                commits = set(commits)
-                if len(commits) > 1:
-                    raise Exception("commits are not the same")
-
-                    # print('commits are not the same')
-                try:
-                    c = commits.pop()
-                    if c != commit:
-                        raise Exception("commit doesnt match epoch commit")
-                except:
-                    pass
+            commit = (
+                self.chain_commitment
+            )
+            commits = [bc["chain_commit"] for bc in data]
+            commits = set(commits)
+            if len(commits) > 1:
+                raise Exception("commits are not the same")
+            try:
+                c = commits.pop()
+                if c != commit:
+                    raise Exception("commit doesnt match epoch commit")
+            except:
+                pass
         else:
             self.block_index = init_dict["block_index"]
             self.chain_commitment = init_dict["chain_commitment"]

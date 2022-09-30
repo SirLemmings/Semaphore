@@ -21,7 +21,6 @@ class RelayProcessor:
             relay (str): The valid relay to cache
             alias (int): The alias of the node that generated the broadcast within the relay
         """
-        # print('handling from', alias)
         if self.epoch >= cfg.activation_epoch:
             if not bc.check_broadcast_validity(broadcast):
                 print("broadcast invalid")
@@ -70,7 +69,6 @@ class RelayProcessor:
             if (
                 not bc.check_broadcast_validity(broadcast)
                 or cfg.epoch_chain_commit[self.epoch] != chain_commit
-                # or cfg.chain_commitment(self.epoch) != chain_commit
             ):
                 print("broadcast invalid1")
                 received_bc.remove(broadcast)

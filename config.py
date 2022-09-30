@@ -1,7 +1,6 @@
 import socket, json
 from alias_management import get_claimed_aliases
 import hashlib
-# import time
 from bidict import bidict
 
 with open("params.json") as f:
@@ -99,7 +98,6 @@ staged_sync_blocks = []
 
 
 def chain_commitment(epoch, where=None):
-    # print(where)
     if synced:
         eps = epochs
         hs = hashes
@@ -116,20 +114,14 @@ def chain_commitment(epoch, where=None):
         print(epoch, earliest_process_epoch)
         raise Exception("skipped epoch")
     if last_commit_epoch > earliest_process_epoch:
-        # print(epoch)
-        # print(last_commit_epoch)
-        # print(earliest_process_epoch)
         raise Exception("insufficient blocks confirmed")
 
     if last_commit_epoch in eps:
-        # print("b")
         last_index = eps.index(last_commit_epoch)
         committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
             last_commit_epoch
         ]
     else:
-        # print("c")
-        # offset = int((current_epoch - epoch) / EPOCH_TIME + FORWARD_SLACK_EPOCHS)
         if epoch in chain_commit_offset:
             offset = chain_commit_offset[epoch]
         else:
@@ -144,16 +136,10 @@ def chain_commitment(epoch, where=None):
     commitment = ""
     for com_hash in com_hashes:
         commitment += com_hash
-    # print("~", hashlib.sha256(commitment.encode()).hexdigest(), commitment)
     if where == "ep":
-        # print(committed_epochs)
-        # print([epoch for epoch in committed_epochs])
         return (
             hashlib.sha256(commitment.encode()).hexdigest(),
             [epoch for epoch in committed_epochs],
         )
-    # if where == 'ep':
-    # print(hashlib.sha256(commitment.encode()).hexdigest(), commitment)
-
     return hashlib.sha256(commitment.encode()).hexdigest()
 

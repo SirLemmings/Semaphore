@@ -126,11 +126,6 @@ def full_connection(alias: int) -> bool:
         print(f"{alias} not in peer list!")
         return False
     if cfg.peers[alias].listening is None or cfg.peers[alias].speaking is None:
-
-        # print(
-        #     f"""{cfg.ALIAS}: connection with {alias} not fully established:
-        #     {cfg.peers[alias].listening is None} {cfg.peers[alias].speaking is None}"""
-        # )
         return False
     return True
 

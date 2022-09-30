@@ -11,7 +11,6 @@ import blocks as bk
 import syncing as sy
 import fork_choice as fc
 
-# import reorgs as ro
 import time
 import json
 from alias_management import get_pubkey
@@ -96,12 +95,11 @@ class Node:
         elif msg_type == "query_fulfillment":
             query_id = data[1]
             response = data[2]
-            # if 'time_request' in query_id:
             if query_id not in Query.open_queries:
                 print(f"{query_id} not in open queries")
                 self.peer_manager.remove_peer(
                     alias
-                )  # THIS FUNCTION OF REMOVING MISBEHAVING PEERS WAS TAKEN FROM TIMEMANAGER
+                )
                 return
             Query.open_queries[query_id].process_query_response(response, alias)
 
@@ -127,9 +125,6 @@ class Node:
                 args=[alias, query_id, chain_tip_epoch, chain_tip_hash],
                 name="history_fulfill",
             ).start()
-            # sy.fulfill_history_request(
-            #     alias, query_id, chain_tip_epoch, chain_tip_hash
-            # )
 
         elif msg_type == "fork_request":
             query_id = data[1]
@@ -143,27 +138,14 @@ class Node:
             except:
                 return
             chain_commit = bc_data["chain_commit"]
-            # print('~chain commit:',chain_commit)
 
-            # if cfg.current_epoch > cfg.committed_epoch:
             if cfg.synced:
-
                 if chain_commit in cfg.epoch_chain_commit.inverse.keys():
                     epoch = cfg.epoch_chain_commit.inverse[chain_commit]
-                    # if (
-                    #     cfg.SHOW_RELAYS
-                    #     and epoch in cfg.epoch_processes
-                    #     and cfg.epoch_processes[epoch].state != "relay"
-                    # ):
-                    #     msg = bc.split_broadcast(broadcast)["message"]
-                    #     if msg != "test":
-                    #         print(f"INVALID TIME: {alias}: {msg}")
                     self.execute_process(epoch, "relay", "relay", alias, broadcast)
 
                 elif cfg.activated:
                     print("~broadcast not in valid epoch")
-                    # print('~',chain_commit)
-                    # print('~',cfg.epoch_chain_commit.keys())
                     if chain_commit not in fc.reorg_processes and cfg.activated:
                         fc.reorg_processes.add(chain_commit)
                         fc.request_fork_history(alias)
@@ -172,11 +154,6 @@ class Node:
         if epoch in cfg.epoch_processes.keys():
             epoch_processor = cfg.epoch_processes[epoch]
             epoch_processor.execute_new_process(state, process, alias, *args)
-        # else:
-        #     print(
-        #         "~epoch not in keys", alias, process, epoch, cfg.epoch_processes.keys()
-        #     )
-        # pr.remove_peer(alias)
 
     def commands(self):
         """
@@ -297,12 +274,6 @@ class Node:
                         tm.deactivate()
                     else:
                         print("not activated")
-                # elif command == "sync":
-                #     if not cfg.activated:
-                #         # self.sync = InitSyncProcessor()
-                #         pass
-                #     else:
-                #         print("already activated")
 
                 elif command == "get_alt":
                     alias = int(input("peer_alias: "))
@@ -335,6 +306,5 @@ class Node:
 
 
 if __name__ == "__main__":
-    # b = Node(1, 2346)
     b = Node(input("alias: "), input("port: "))
     

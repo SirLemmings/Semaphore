@@ -30,7 +30,6 @@ def time_events():
         now = cl.network_time()
         cl.initiate_time_update()
         if aligned:
-            # s.enter( cfg.CLOCK_INTERVAL, 0, event_loop)
             s.enter(ideal_time + cfg.CLOCK_INTERVAL - now, 0, event_loop)
             ideal_time+=cfg.CLOCK_INTERVAL
         else:
@@ -53,29 +52,12 @@ def time_events():
 
 def run_epoch():
     next_epoch = cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
-
-    # global prev
-    # try:
-    #     print("~elpased", time.time() - prev)
-    # except:
-    #     pass
-    # prev = time.time()
     if cfg.SHOW_EPOCH_INFO:
         print()
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        # if cfg.current_epoch%4==0:
-        # print(cl.total_offset())
 
-        # print("~CHAIN_COMMIT_LEN", len(cfg.epoch_chain_commit))
-    # print((cfg.epoch_chain_commit.keys()))
-    # print((cfg.epoch_chain_commit.values()))
-    # print(cfg.epochs)
-    # print(cfg.chain_commit_offset)
-    # print("~comit", len(cfg.epoch_chain_commit))
-    # print("~comit", sorted(cfg.epoch_chain_commit.keys()))
-    # print()
     if cfg.initialized:
         try:
             for epoch in cfg.epoch_processes:
@@ -93,7 +75,6 @@ def run_epoch():
 
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
-                    # cm.originate_broadcast(f"{cfg.ALIAS}{i}{cl.network_time()}")
                     cm.originate_broadcast("test")
 
             for epoch in cfg.finished_epoch_processes:
@@ -107,7 +88,6 @@ def run_epoch():
             cs.load_staged_updates()
 
             if len(cfg.staged_sync_blocks) > 0:
-                # print("~4MORE THAN 0")
                 cs.sync_func(cfg.staged_sync_blocks)
 
         if cfg.committed_epoch == float("inf"):
@@ -118,12 +98,7 @@ def run_epoch():
             # and len(cfg.temp_epochs) == cfg.DELAY * 2
             # not cfg.synced and len(cfg.epoch_chain_commit) == cfg.DELAY
         ):  # TODO this is delayed by cfg.DELAY periods because the chain commit might be borked if it is run not at the start of epoch process. should fix the function and remove the extra delay
-            # print("~1SYNC!!!!!!!!!!!!!!!!!!")
             cs.sync()
-
-        # elif cfg.resync:
-        #     InitSyncProcessor()
-        #     cfg.resync=False
 
     if cfg.current_epoch == 0:
         cfg.current_epoch = round(cl.network_time()) + cfg.EPOCH_TIME
@@ -131,9 +106,7 @@ def run_epoch():
         cfg.current_epoch += cfg.EPOCH_TIME
         if cfg.current_epoch != round(cl.network_time()) + cfg.EPOCH_TIME:
             pass
-            # print(
-            #     f"~WARNING TIMES NOT MATCH {cfg.current_epoch} {round(cl.network_time()) + cfg.EPOCH_TIME}"
-            # )
+
 
 
 # TODO remove this function once we know its working. just merge with run_epoch
@@ -150,16 +123,6 @@ def start_epoch_process(epoch=cfg.current_epoch):
 
 def initialize():
     print("EPOCH PROCESSING ACTIVATED")
-    # PAST = cfg.SYNC_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SLACK_EPOCHS
-    # FUTURE = cfg.FORWARD_SLACK_EPOCHS + 1
-    # activating_epochs = range(
-    #     cfg.current_epoch - PAST * cfg.EPOCH_TIME,
-    #     cfg.current_epoch + FUTURE * cfg.EPOCH_TIME,
-    #     cfg.EPOCH_TIME,
-    # )
-    # for epoch in activating_epochs:
-    #     start_epoch_process(epoch)
-
     cfg.initialized = True
 
 

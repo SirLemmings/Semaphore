@@ -79,11 +79,6 @@ def fulfill_fork_request(alias, query_id, past):
                 history_blocks.append(block.convert_to_dict())
         print("fulfilled fork successfully")
         cm.send_peer_message(alias, f"query_fulfillment|{query_id}|{history_blocks}")
-        # for block in history_blocks:
-            # if block=='GENESIS':
-            #     print('sent index genesis')
-            # else:
-            #     print('sent index', block['epoch_timestamp'], block['block_index'])
     else:
         print("not activated. delaying fork fulfillment")
 
@@ -124,7 +119,6 @@ def conclude_fork_process(process):
         except KeyError:
             break
 
-    # swap = True
     swap = compare_weight(blocks.copy(), last_common_epoch)
     print("~SWAP", swap)
     if swap:
@@ -163,76 +157,7 @@ def remove_history(last_common_epoch):
         os.remove(name)
     cfg.epochs = cfg.epochs[:index]
     print('aft',cfg.epochs[:15])
-    # print("*removed history", last_common_epoch)
-    # print("remaining indices:", cfg.indexes)
-
-
-# def compare_weight(alt_blocks, last_common_epoch):
-#     current_blocks = [
-#         block
-#         for block in [
-#             cfg.blocks[epoch]
-#             for epoch in cfg.epochs[cfg.epochs.index(last_common_epoch) + 1 :]
-#         ]
-#     ]
-#     if len(alt_blocks) == 0 or len(current_blocks) == 0:
-#         print("~uhhhhh", len(alt_blocks), len(current_blocks))
-#         return
-#     chain_engagements_alt = set()
-#     chain_engagements_current = set()
-#     shallow_block_alt = alt_blocks.pop(-1)
-#     time_alt = shallow_block_alt["epoch_timestamp"]
-#     shallow_block_current = current_blocks.pop(-1)
-#     time_current = shallow_block_current["epoch_timestamp"]
-
-#     while True:
-#         if time_current > time_alt:
-#             pre_engagements = bk.get_block_engagements(shallow_block_current)
-#             pre_engagements -= chain_engagements_alt
-#             chain_engagements_current = chain_engagements_current.union(pre_engagements)
-#             if len(current_blocks) == 0:
-#                 time_current = -1
-#             else:
-#                 shallow_block_current = current_blocks.pop(-1)
-#                 time_current = shallow_block_current["epoch_timestamp"]
-
-#         elif time_alt > time_current:
-#             pre_engagements = bk.get_block_engagements(shallow_block_alt)
-#             pre_engagements -= chain_engagements_current
-#             chain_engagements_alt = chain_engagements_alt.union(pre_engagements)
-#             if len(alt_blocks) == 0:
-#                 time_alt = -1
-#             else:
-#                 shallow_block_alt = alt_blocks.pop(-1)
-#                 time_alt = shallow_block_alt["epoch_timestamp"]
-
-#         else:
-#             current_pre_engagements = bk.get_block_engagements(shallow_block_current)
-#             current_pre_engagements -= chain_engagements_alt
-#             alt_pre_engagements = bk.get_block_engagements(shallow_block_alt)
-#             alt_pre_engagements -= chain_engagements_current
-#             chain_engagements_current = chain_engagements_current.union(
-#                 current_pre_engagements
-#             )
-#             chain_engagements_alt = chain_engagements_alt.union(alt_pre_engagements)
-#             if len(current_blocks) == 0:
-#                 time_current = -1
-#             else:
-#                 shallow_block_current = current_blocks.pop(-1)
-#                 time_current = shallow_block_current["epoch_timestamp"]
-#             if len(alt_blocks) == 0:
-#                 time_alt = -1
-#             else:
-#                 shallow_block_alt = alt_blocks.pop(-1)
-#                 time_alt = shallow_block_alt["epoch_timestamp"]
-
-#         if time_current == -1 and time_alt == -1:
-#             break
-
-#     print(
-#         f"~alt {len(chain_engagements_alt)}, current {len(chain_engagements_current)}"
-#     )
-#     return len(chain_engagements_alt) > len(chain_engagements_current)
+    
 
 
 def compare_weight(alt_blocks, last_common_epoch):
