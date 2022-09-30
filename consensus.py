@@ -11,13 +11,14 @@ def load_block_data(block):
     cfg.blocks[epoch] = block
     cfg.hashes[epoch] = block.block_hash
     cfg.indexes[epoch] = block.block_index
-    
+
     cfg.epochs.append(epoch)
     if epoch not in cfg.epoch_chain_commit:
         cfg.epoch_chain_commit.forceput(epoch, block.chain_commitment)
     for epoch in cfg.chain_commit_offset:
         if cfg.chain_commit_offset[epoch] > 0:
             cfg.chain_commit_offset[epoch] -= 1
+
 
 
 def temp_load_block_data(block):
@@ -42,7 +43,6 @@ def load_staged_updates():
             temp_load_block_data(block)
     cfg.sync_blocks_staged = False
     cfg.staged_block_updates = []
-
 
 
 def stage_history_update(block,):
@@ -103,9 +103,7 @@ def sync_func(blocks):
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
 
-    cfg.activation_epoch = (
-        cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
-    )
+    cfg.activation_epoch = cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
     cfg.synced = True
     for epoch in cfg.epoch_processes.keys():
         cfg.epoch_chain_commit[epoch] = cfg.chain_commitment(epoch)

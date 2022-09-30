@@ -46,7 +46,6 @@ SHOW_VOTE_CONFS = False
 
 DELAY = SLACK_EPOCHS + VOTE_MAX_EPOCHS + FORWARD_SLACK_EPOCHS + SYNC_EPOCHS + 1
 
-
 ALIAS = 0
 IP = socket.gethostbyname(socket.gethostname() + ".local")
 PORT = 0
@@ -69,8 +68,10 @@ committed_epoch = float("inf")
 synced = False
 activated = False
 activation_epoch = float("inf")
+bootstrapped_epoch = float("inf")
 enforce_chain = True
 sync_blocks_staged = False
+bootstrapping = False
 
 chain_commit_offset = {}
 current_epoch = 0
@@ -114,23 +115,42 @@ def chain_commitment(epoch, where=None):
     if last_commit_epoch > earliest_process_epoch:
         raise Exception("insufficient blocks confirmed")
 
-    if last_commit_epoch in eps:
+    if (
+        not bootstrapping
+    ):  # once synced a chain commitment is made even if there is no block
+        # eps = sorted(list(epoch_chain_commit.keys()))
+        eps = list(range(last_commit_epoch-EPOCH_TIME*DELAY*2, last_commit_epoch + EPOCH_TIME, EPOCH_TIME))#There are extra elements here 
         last_index = eps.index(last_commit_epoch)
         committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
             last_commit_epoch
         ]
-    else:
-        if epoch in chain_commit_offset:
-            offset = chain_commit_offset[epoch]
+
+    else:  # these may be redundant with above, but i dont want to break things rn
+        if last_commit_epoch in eps:
+            last_index = eps.index(last_commit_epoch)
+            committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
+                last_commit_epoch
+            ]
         else:
-            offset = 0
-        committed_epochs = eps[-DELAY - offset :]
-        committed_epochs = committed_epochs[:DELAY]
+            if epoch in chain_commit_offset:
+                offset = chain_commit_offset[epoch]
+            else:
+                offset = 0
+            committed_epochs = eps[-DELAY - offset :]
+            committed_epochs = committed_epochs[:DELAY]
 
     if len(committed_epochs) != DELAY:
         raise Exception(f"uh oh wrong nuber of epoch {epoch}")
-    
+
     com_hashes = [hs[epoch] for epoch in committed_epochs]
+    # com_hashes = [
+    #     hs[epoch] if epoch in hs else epoch_chain_commit[epoch]
+    #     for epoch in committed_epochs
+    # ]
+    if where == "ep":
+        print([h[:6] for h in com_hashes])
+        # print([epoch_chain_commit[e][:6] for e in sorted(epoch_chain_commit)])
+        # print([hashes[h][:6] for h in sorted(hashes)])
     commitment = ""
     for com_hash in com_hashes:
         commitment += com_hash

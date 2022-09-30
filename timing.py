@@ -59,6 +59,8 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
+        print(sorted(cfg.hashes))
+        print(sorted(cfg.temp_hashes))
 
     if cfg.initialized:
         try:
@@ -74,10 +76,9 @@ def run_epoch():
             print(e)
 
         if cfg.current_epoch > 0:
-
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
-                    if random.random() > 0.5 or len(cfg.peers_activated) == 0:
+                    if random.random() > .5 or cfg.bootstrapping:
                         cm.originate_broadcast("test")
 
             for epoch in cfg.finished_epoch_processes:
@@ -106,6 +107,7 @@ def run_epoch():
         cfg.current_epoch += cfg.EPOCH_TIME
         if cfg.current_epoch != round(cl.network_time()) + cfg.EPOCH_TIME:
             pass
+
 
 
 # TODO remove this function once we know its working. just merge with run_epoch

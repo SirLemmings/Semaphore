@@ -24,7 +24,6 @@ class EpochProcessor:
         self.processor = RelayProcessor(self.epoch)
         self.state = "relay"
         self.time_alive = 0
-
         if epoch >= cfg.committed_epoch:
             try:
                 cfg.epoch_chain_commit[self.epoch], self.test = cfg.chain_commitment(
@@ -33,6 +32,7 @@ class EpochProcessor:
             except Exception as e:
                 print()
                 print("~", cfg.epoch_chain_commit)
+                print(list(cfg.epoch_chain_commit.keys()))
                 print()
                 raise e
 
@@ -47,8 +47,13 @@ class EpochProcessor:
                 cfg.activated = True
                 cfg.enforce_chain = True
                 print("***ACTIVATED***")
+            
+            if self.epoch == cfg.bootstrapped_epoch - cfg.EPOCH_TIME:
+                cfg.bootstrapping = False
+                print("***BOOTSTRAPPED***")
+
         elif self.time_alive == BUILD_DELAY:
-            confirmed_bc = self.processor.terminate_vote()
+            confirmed_bc,sync_commit = self.processor.terminate_vote()
             if cfg.SHOW_CONF_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
                 print("CONFIRMED BROADCASTS:")
                 output = []
@@ -58,7 +63,7 @@ class EpochProcessor:
                     output.append((alias, bcid))
                 for i in sorted(output):
                     print(f"{i[0]}: {i[1]}")
-            self.processor = BuildProcessor(self.epoch, confirmed_bc)
+            self.processor = BuildProcessor(self.epoch, confirmed_bc,sync_commit)
             self.state = "sync"
         elif self.time_alive == EPOCH_VOTE_DELAY:
             seen_bc = self.processor.seen_bc

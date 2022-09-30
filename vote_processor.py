@@ -45,6 +45,7 @@ class VoteProcessor:
         self.rejected_commits = set()
         self.rejected_bcids = set()
         self.rejected_peers = set()
+        self.sync_commit = None
         Thread(target=self.s.run, name=f"vote_{self.epoch}").start()
 
     def execute_vote(self):
@@ -96,6 +97,8 @@ class VoteProcessor:
         response = ast.literal_eval(response)
         received_acks = response[0]
         commit = response[1]
+        if not cfg.activated:
+            self.sync_commit = commit#TODO put something syble resistant
         if cfg.synced and (cfg.activated or cfg.enforce_chain):
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 if received_acks == {}:
@@ -109,6 +112,8 @@ class VoteProcessor:
                 received_acks = set()
             if type(received_acks) is set:
                 return received_acks
+
+        
 
     def conclude_vote_process(self, process):
         """incorporate information for round of epoch vote"""
@@ -301,9 +306,10 @@ class VoteProcessor:
         Parameters:
             epoch (int): The epoch of broadcasts that was voted on
         """
+        print('~final bc',self.broadcasts)
         if self.execute:
             self.execute = False
-            return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]
+            return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0], self.sync_commit
         return None
 
     def accomodate_missing_bc(self, acks_union, peers_responeded):

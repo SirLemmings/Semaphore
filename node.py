@@ -97,9 +97,7 @@ class Node:
             response = data[2]
             if query_id not in Query.open_queries:
                 print(f"{query_id} not in open queries")
-                self.peer_manager.remove_peer(
-                    alias
-                )
+                self.peer_manager.remove_peer(alias)
                 return
             Query.open_queries[query_id].process_query_response(response, alias)
 
@@ -253,6 +251,10 @@ class Node:
                         cfg.activated = True
                         cfg.enforce_chain = True
                         cfg.activation_epoch = cfg.current_epoch
+                        cfg.bootstrapping = True
+                        cfg.bootstrapped_epoch = (
+                            cfg.current_epoch + cfg.DELAY * 2 * cfg.EPOCH_TIME
+                        )
                         epochs = [
                             epoch
                             for epoch in range(
@@ -307,4 +309,4 @@ class Node:
 
 if __name__ == "__main__":
     b = Node(input("alias: "), input("port: "))
-    
+
