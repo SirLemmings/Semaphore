@@ -146,9 +146,13 @@ def originate_broadcast(message: str, parent=""):
             message (str): A message to broadcast out to the Semaphore network. Size limit is ?? characters
             parent (str): An optional ID of a parent broadcast
         """
-    chain_com = cfg.epoch_chain_commit[
-        cfg.current_epoch
-    ]  # cfg.chain_commitment(cfg.current_epoch, "ob")
+    try:
+        chain_com = cfg.epoch_chain_commit[
+            cfg.current_epoch
+        ]  # cfg.chain_commitment(cfg.current_epoch, "ob")
+    except:
+        print('uhh')
+        return
     broadcast = bc.generate_broadcast(message, chain_com, parent)
     cfg.epoch_processes[cfg.current_epoch].processor.handle_relay(cfg.ALIAS, broadcast)
 

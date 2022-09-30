@@ -3,6 +3,7 @@ import time
 from process import Process
 import config as cfg
 import communications as cm
+import random
 
 
 network_offset = 0
@@ -61,13 +62,14 @@ def update_network_offset(offsets: list) -> None:
         times (list): A list of times sampled from random peers
     """
     offsets = [offset for offset in offsets if abs(offset) < cfg.REPORT_ERROR_THRESHOLD]
-    if len(offsets)==0:
+    if len(offsets) == 0:
         return
     sample = sum(offsets) / (len(offsets))
     global network_offset
-    network_offset = cfg.TIME_INERTIA * network_offset + (1 - cfg.TIME_INERTIA) * sample
+    network_offset+=sample*(1-cfg.TIME_INERTIA)
     update_correction()
     cfg.network_offset = network_offset
+
 
 
 def initiate_time_update() -> None:
@@ -94,15 +96,16 @@ def fulfill_time_request(alias: int, query_id: str) -> None:
     cm.send_peer_message(alias, f"query_fulfillment|{query_id}|{report_time()}")
 
 
+
 def format_response(query, response: str) -> float:
     """converte reported time to offset"""
     received_time = float(response)
     ping_correction = (time.time() - query.data) / 2
-    offset = received_time + ping_correction - query.data
+    offset = received_time + ping_correction - network_time()
     return offset
 
 
-def conclude_process(process)-> None:
+def conclude_process(process) -> None:
     """
     Concludes the time update process
     """

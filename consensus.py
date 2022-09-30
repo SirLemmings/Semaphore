@@ -112,7 +112,7 @@ def sync_func(blocks):
         epoch = block.epoch_timestamp
         if epoch in cfg.temp_epochs:
             break
-        print("b sent")
+        # print("b sent")
         load_block_data(block)
         # print(block.epoch_timestamp)
         # cfg.epoch_chain_commit[epoch] = block.chain_commitment
@@ -128,7 +128,7 @@ def sync_func(blocks):
         block.update_index()
         epoch = block.epoch_timestamp
 
-        print("b_made")
+        # print("b_made")
         load_block_data(block)
         # cfg.epoch_chain_commit[epoch] = block.chain_commitment
         dump = json.dumps(block.convert_to_dict())

@@ -1,7 +1,7 @@
 import socket, json
 from alias_management import get_claimed_aliases
 import hashlib
-import time
+# import time
 from bidict import bidict
 
 with open("params.json") as f:
@@ -11,7 +11,7 @@ SIG_LEN = params["SIG_LEN"]
 CHAIN_COMMIT_LEN = params["CHAIN_COMMIT_LEN"]
 INDICATOR_LEN = params["INDICATOR_LEN"]
 HEADER_LENGTH = params["HEADER_LENGTH"]
-TIME_BASE_OFFSET = params["TIME_BASE_OFFSET"]  # + random.random() * 10
+TIME_BASE_OFFSET = params["TIME_BASE_OFFSET"]
 CLOCK_INTERVAL = params["CLOCK_INTERVAL"]
 EPOCH_TIME = params["EPOCH_TIME"]
 SLACK_EPOCHS = params["SLACK_EPOCHS"]
@@ -98,10 +98,6 @@ temp_hashes = bidict({})
 staged_sync_blocks = []
 
 
-def network_time():
-    return time.time() + network_offset
-
-
 def chain_commitment(epoch, where=None):
     # print(where)
     if synced:
@@ -125,14 +121,6 @@ def chain_commitment(epoch, where=None):
         # print(earliest_process_epoch)
         raise Exception("insufficient blocks confirmed")
 
-    # if epoch in eps:
-    #     print('a')
-    #     epoch_index = eps.index(epoch)
-    #     committed_epochs = eps[epoch_index - 2 * DELAY : epoch_index - DELAY]
-    # print('~last',last_commit_epoch)
-    # for ep in eps:
-    #     print(ep)
-    #     print(ep==last_commit_epoch)
     if last_commit_epoch in eps:
         # print("b")
         last_index = eps.index(last_commit_epoch)

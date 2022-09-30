@@ -261,7 +261,7 @@ class Node:
                 elif command == "time_sync":
                     cl.initiate_time_update()
                     time.sleep(0.1)
-                    print(cfg.network_time())
+                    print(cl.network_time())
                 elif command == "init":
                     if not cfg.initialized:
                         tm.initialize()
@@ -337,3 +337,4 @@ class Node:
 if __name__ == "__main__":
     # b = Node(1, 2346)
     b = Node(input("alias: "), input("port: "))
+    

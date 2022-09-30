@@ -72,18 +72,12 @@ class Block:
     def __init__(self, broadcasts=None, epoch=None, init_dict=None):
         if init_dict is None:
             data = [bc.split_broadcast(broadcast) for broadcast in broadcasts]
-            # if epoch > cfg.committed_epoch:
             if cfg.activated:
                 self.chain_commitment = cfg.epoch_chain_commit[
                     epoch
-                ]  # cfg.chain_commitment(epoch, "bk")
-                # print(epoch, self.chain_commitment)
+                ]
             else:
-                # try:
                 self.chain_commitment = data[0]["chain_commit"]
-                # except Exception as e:
-                #     print('~',e)
-                #     print(data)
             self.epoch_timestamp = epoch
 
             alias_list = [bc["alias"] for bc in data]

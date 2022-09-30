@@ -11,7 +11,7 @@ from bidict import bidict
 FREQ = int(cfg.EPOCH_TIME / cfg.CLOCK_INTERVAL)
 position = 0
 aligned = False
-
+ideal_time = 0
 
 def time_events():
     """
@@ -26,17 +26,21 @@ def time_events():
         """functions that execute on a timer with epochs"""
         global position
         global aligned
-        now = cfg.network_time()
+        global ideal_time
+        now = cl.network_time()
         cl.initiate_time_update()
-
         if aligned:
-            offset = now - cfg.current_epoch + position * cfg.CLOCK_INTERVAL
+            # s.enter( cfg.CLOCK_INTERVAL, 0, event_loop)
+            s.enter(ideal_time + cfg.CLOCK_INTERVAL - now, 0, event_loop)
+            ideal_time+=cfg.CLOCK_INTERVAL
         else:
             offset = now % cfg.CLOCK_INTERVAL
-        s.enter((cfg.CLOCK_INTERVAL - offset), 0, event_loop)
+            s.enter((cfg.CLOCK_INTERVAL - offset), 0, event_loop)
 
         if not aligned and round(now, 2) % cfg.EPOCH_TIME == 0:
             aligned = True
+            ideal_time = round(now, 2)
+
         if aligned:
             if position == 0:
                 run_epoch()
@@ -49,7 +53,7 @@ def time_events():
 
 def run_epoch():
     next_epoch = cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
-    
+
     # global prev
     # try:
     #     print("~elpased", time.time() - prev)
@@ -61,6 +65,9 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
+        # if cfg.current_epoch%4==0:
+        # print(cl.total_offset())
+
         # print("~CHAIN_COMMIT_LEN", len(cfg.epoch_chain_commit))
     # print((cfg.epoch_chain_commit.keys()))
     # print((cfg.epoch_chain_commit.values()))
@@ -81,20 +88,19 @@ def run_epoch():
         except RuntimeError as e:
             print("IGNORING ERROR:")
             print(e)
-        
 
         if cfg.current_epoch > 0:
 
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
-                    # cm.originate_broadcast(f"{cfg.ALIAS}{i}{cfg.network_time()}")
+                    # cm.originate_broadcast(f"{cfg.ALIAS}{i}{cl.network_time()}")
                     cm.originate_broadcast("test")
 
             for epoch in cfg.finished_epoch_processes:
                 try:
                     cfg.epoch_processes[epoch].kill_process()
                 except KeyError as e:
-                    print('IGNORING ERROR:')
+                    print("IGNORING ERROR:")
                     print(e)
             cfg.finished_epoch_processes = set()
 
@@ -120,13 +126,13 @@ def run_epoch():
         #     cfg.resync=False
 
     if cfg.current_epoch == 0:
-        cfg.current_epoch = round(cfg.network_time()) + cfg.EPOCH_TIME
+        cfg.current_epoch = round(cl.network_time()) + cfg.EPOCH_TIME
     else:
         cfg.current_epoch += cfg.EPOCH_TIME
-        if cfg.current_epoch != round(cfg.network_time()) + cfg.EPOCH_TIME:
+        if cfg.current_epoch != round(cl.network_time()) + cfg.EPOCH_TIME:
             pass
             # print(
-            #     f"~WARNING TIMES NOT MATCH {cfg.current_epoch} {round(cfg.network_time()) + cfg.EPOCH_TIME}"
+            #     f"~WARNING TIMES NOT MATCH {cfg.current_epoch} {round(cl.network_time()) + cfg.EPOCH_TIME}"
             # )
 
 
@@ -136,7 +142,10 @@ def start_epoch_process(epoch=cfg.current_epoch):
     # print("running")
     if epoch in cfg.epoch_processes:
         print("something went very wrong. epoch process already exists")
-    cfg.epoch_processes[epoch] = EpochProcessor(epoch)
+    if (
+        epoch not in cfg.epoch_processes
+    ):  # this check prevents ValueDuplicationError upon reorg
+        cfg.epoch_processes[epoch] = EpochProcessor(epoch)
 
 
 def initialize():
