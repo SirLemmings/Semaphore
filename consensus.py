@@ -10,7 +10,6 @@ def load_block_data(block):
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
     cfg.hashes[epoch] = block.block_hash
-    print('~new index', epoch,block.block_index)
     cfg.indexes[epoch] = block.block_index
     
     cfg.epochs.append(epoch)
@@ -77,7 +76,6 @@ def add_block(block, epoch):
 
 
 def sync():
-    print("~2 request")
     sy.request_history()
 
 
@@ -95,7 +93,6 @@ def sync_func(blocks):
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
     i = 0
-    print(cfg.indexes)
     for block in [cfg.temp_blocks[epoch] for epoch in cfg.temp_epochs]:
         i += 1
         block.update_index()

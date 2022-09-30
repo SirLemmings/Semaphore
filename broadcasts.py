@@ -12,14 +12,11 @@ def generate_broadcast(message: str, chain_commit: str, parent=""):
         chain_commit (str): The chain commitment corresponding to the current epoch
         parent (str): The ID corresponding to a parent broadcast
     """
-
     chain_commit = str(chain_commit).zfill(cfg.CHAIN_COMMIT_LEN)
-
     indicator = len(parent)
     indicator = str(indicator).zfill(cfg.INDICATOR_LEN)
     broadcast = chain_commit + indicator + parent + str(message)
     broadcast = sign_msg(broadcast)
-
     return broadcast
 
 
@@ -64,9 +61,7 @@ def format_message(msg):
 
     Returns: The encoded message with a header attached
     """
-    # if len(msg)>100: print('~len send',len(msg))
     header = f"{len(msg):<{cfg.HEADER_LENGTH}}".encode("utf-8")
-    # if len(msg)>100: print('~head',header)
     message = msg.encode("utf-8")
     return header + message
 
@@ -123,11 +118,10 @@ def check_broadcast_validity_vote(broadcast, vote_epoch) -> bool:
     """checks that a broadcast breaks no network rules"""
     bc_data = split_broadcast(broadcast)
     chain_commit = bc_data["chain_commit"]
-    # if vote_epoch > cfg.committed_epoch:
     if cfg.activated:
         if (
             chain_commit != cfg.epoch_chain_commit[vote_epoch]
-        ):  # cfg.chain_commitment(vote_epoch):
+        ):
             return False
         return verify_message_sig(broadcast)
     else:

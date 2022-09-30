@@ -41,7 +41,7 @@ SHOW_RELAYS = False
 SHOW_BLOCK_INFO = True
 SHOW_EPOCH_INFO = True
 SHOW_CONF_BC = False
-SHOW_SEEN_BC = False
+SHOW_SEEN_BC = True
 SHOW_VOTE_CONFS = False
 
 DELAY = SLACK_EPOCHS + VOTE_MAX_EPOCHS + FORWARD_SLACK_EPOCHS + SYNC_EPOCHS + 1
@@ -79,8 +79,6 @@ finished_epoch_processes = set()
 staged_block_updates = []
 temp_staged_block_updates = []
 
-
-resync = False
 
 epoch_chain_commit = bidict({})  # {epoch:chain_commit}
 

@@ -7,11 +7,13 @@ import communications as cm
 import consensus as cs
 from epoch_processor import EpochProcessor
 from bidict import bidict
+import random
 
 FREQ = int(cfg.EPOCH_TIME / cfg.CLOCK_INTERVAL)
 position = 0
 aligned = False
 ideal_time = 0
+
 
 def time_events():
     """
@@ -31,7 +33,7 @@ def time_events():
         cl.initiate_time_update()
         if aligned:
             s.enter(ideal_time + cfg.CLOCK_INTERVAL - now, 0, event_loop)
-            ideal_time+=cfg.CLOCK_INTERVAL
+            ideal_time += cfg.CLOCK_INTERVAL
         else:
             offset = now % cfg.CLOCK_INTERVAL
             s.enter((cfg.CLOCK_INTERVAL - offset), 0, event_loop)
@@ -75,7 +77,8 @@ def run_epoch():
 
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
-                    cm.originate_broadcast("test")
+                    if random.random() > 0.5 or len(cfg.peers_activated) == 0:
+                        cm.originate_broadcast("test")
 
             for epoch in cfg.finished_epoch_processes:
                 try:
@@ -84,7 +87,6 @@ def run_epoch():
                     print("IGNORING ERROR:")
                     print(e)
             cfg.finished_epoch_processes = set()
-
             cs.load_staged_updates()
 
             if len(cfg.staged_sync_blocks) > 0:
@@ -95,8 +97,6 @@ def run_epoch():
                 cfg.committed_epoch = cfg.current_epoch + cfg.EPOCH_TIME
         elif (
             not cfg.synced
-            # and len(cfg.temp_epochs) == cfg.DELAY * 2
-            # not cfg.synced and len(cfg.epoch_chain_commit) == cfg.DELAY
         ):  # TODO this is delayed by cfg.DELAY periods because the chain commit might be borked if it is run not at the start of epoch process. should fix the function and remove the extra delay
             cs.sync()
 
@@ -108,11 +108,9 @@ def run_epoch():
             pass
 
 
-
 # TODO remove this function once we know its working. just merge with run_epoch
 def start_epoch_process(epoch=cfg.current_epoch):
     """initiate new epoch process"""
-    # print("running")
     if epoch in cfg.epoch_processes:
         print("something went very wrong. epoch process already exists")
     if (

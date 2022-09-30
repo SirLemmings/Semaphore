@@ -70,6 +70,7 @@ def verify_proof(proof: tuple) -> bool:
 
 class Block:
     def __init__(self, broadcasts=None, epoch=None, init_dict=None):
+        """Create a block from a set of broadcasts or from a dict"""
         if init_dict is None:
             data = [bc.split_broadcast(broadcast) for broadcast in broadcasts]
             if cfg.activated:

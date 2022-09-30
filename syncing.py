@@ -4,8 +4,6 @@ import blocks as bk
 import communications as cm
 import consensus as cs
 import ast
-import os
-import json
 
 
 def request_history():

@@ -240,7 +240,6 @@ class VoteProcessor:
             self.broadcasts[bcid] = broadcast
 
     def request_history(self, alias):
-        print("~r hist", alias)
         chain_tip_epoch = cfg.epochs[-1]
         chain_tip_hash = cfg.hashes[chain_tip_epoch]
 
@@ -264,15 +263,11 @@ class VoteProcessor:
             for block in received_blocks:
                 if type(block) is not dict:
                     return
-            print("got history")
             return received_blocks
 
     def conclude_history_process(self, process):
-        print("~CHECK HIST")
         if process.cached_responses[0] == "no_block":
-            print("~REJECT HISTORY")
             alias = list(process.peers_responded.keys())[0]
-            print("~h-peer", alias)
             self.rejected_peers.add(alias)
             return
         blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
@@ -292,15 +287,11 @@ class VoteProcessor:
                 commitment = hashlib.sha256(commitment.encode()).hexdigest()
 
                 if commitment in self.pending_commits:
-                    print("ACCEPT HISTORY")
                     self.seen_commits.add(commitment)
                     return
         if test_count > 0:
-            print("~REJECT HISTORY")
-            print("counted", test_count)
             self.rejected_commits.add(commitment)
             alias = list(process.peers_responded.keys())[0]
-            print("~h-peer", alias)
             self.rejected_peers.add(alias)
 
     def terminate_vote(self):

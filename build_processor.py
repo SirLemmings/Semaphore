@@ -1,20 +1,16 @@
 import blocks as bk
 import consensus as cs
 import blocks as bk
-# import timing as tm
 import config as cfg
-
-from process import Process
 
 class BuildProcessor:
     def __init__(self, epoch, broadcasts):
         self.epoch = epoch
         self.broadcasts = broadcasts
-
         if self.broadcasts is not None and len(self.broadcasts)>0:
             self.block = bk.Block(self.broadcasts, self.epoch)
         else:
-            print("~EMPTY BLOCK")
+            print("~EMPTY EPOCH")
             self.block = None
 
     def finalize_block(self):
@@ -25,6 +21,6 @@ class BuildProcessor:
         if cfg.SHOW_BLOCK_INFO:
             print("~block_hash:", self.block.block_hash)
             print(
-                "~chain_weight:",
+                "~block_engagements:",
                 len(self.block.bc_body) if self.block.bc_body != "None" else 0,
             )

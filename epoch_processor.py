@@ -40,8 +40,6 @@ class EpochProcessor:
         """update processor at the end of each epoch"""
         self.time_alive += cfg.EPOCH_TIME
         if self.time_alive == FINALIZE_DELAY:
-            # print("~done delay", self.epoch)
-
             self.processor.finalize_block()
             cfg.finished_epoch_processes.add(self.epoch)
             if self.epoch == cfg.activation_epoch - cfg.EPOCH_TIME:
@@ -64,7 +62,7 @@ class EpochProcessor:
             self.state = "sync"
         elif self.time_alive == EPOCH_VOTE_DELAY:
             seen_bc = self.processor.seen_bc
-            if cfg.SHOW_SEEN_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
+            if cfg.SHOW_SEEN_BC:
                 print("SEEN BROADCASTS:")
                 output = []
                 for i in seen_bc:
