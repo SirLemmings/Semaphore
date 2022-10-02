@@ -63,6 +63,7 @@ def run_epoch():
         print(sorted(cfg.temp_hashes))
 
     if cfg.initialized:
+        #Handle the processing of each active epoch
         try:
             for epoch in cfg.epoch_processes:
                 cfg.epoch_processes[epoch].step()
@@ -71,20 +72,23 @@ def run_epoch():
                 next_epoch not in cfg.epoch_processes
             ):  # TODO do something better than this check
                 start_epoch_process(next_epoch)
-        except RuntimeError as e:
+        except RuntimeError as e: #occasional issue upon reorging
             print("IGNORING ERROR:")
             print(e)
 
+
         if cfg.current_epoch > 0:
+            #Send test broadcast each epoch
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
-                    if random.random() > .5 or cfg.bootstrapping:
+                    if random.random() > -5 or cfg.bootstrapping:
                         cm.originate_broadcast("test")
 
+            #delete epoch processor when epoch is no longer active
             for epoch in cfg.finished_epoch_processes:
                 try:
                     cfg.epoch_processes[epoch].kill_process()
-                except KeyError as e:
+                except KeyError as e:#occasional error upon reorging
                     print("IGNORING ERROR:")
                     print(e)
             cfg.finished_epoch_processes = set()
@@ -107,7 +111,6 @@ def run_epoch():
         cfg.current_epoch += cfg.EPOCH_TIME
         if cfg.current_epoch != round(cl.network_time()) + cfg.EPOCH_TIME:
             pass
-
 
 
 # TODO remove this function once we know its working. just merge with run_epoch

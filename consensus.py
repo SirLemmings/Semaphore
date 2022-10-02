@@ -109,3 +109,12 @@ def sync_func(blocks):
         cfg.epoch_chain_commit[epoch] = cfg.chain_commitment(epoch)
     print("***SYNCED***")
 
+def chain_commitment(epoch, epochs = cfg.epochs, hashes=cfg.hashes, origin=None):
+    earliest_process_epoch = (
+        cfg.current_epoch - (cfg.SLACK_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SYNC_EPOCHS) * cfg.EPOCH_TIME
+    )
+    last_commit_epoch = epoch - cfg.DELAY * cfg.EPOCH_TIME
+
+    if last_commit_epoch > earliest_process_epoch:
+        raise Exception("insufficient blocks confirmed")
+    

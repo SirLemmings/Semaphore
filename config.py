@@ -126,11 +126,13 @@ def chain_commitment(epoch, where=None):
         ]
 
     else:  # these may be redundant with above, but i dont want to break things rn
+        print(bootstrapping)
         if last_commit_epoch in eps:
             last_index = eps.index(last_commit_epoch)
             committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
                 last_commit_epoch
             ]
+            print(1)
         else:
             if epoch in chain_commit_offset:
                 offset = chain_commit_offset[epoch]
@@ -138,6 +140,7 @@ def chain_commitment(epoch, where=None):
                 offset = 0
             committed_epochs = eps[-DELAY - offset :]
             committed_epochs = committed_epochs[:DELAY]
+            print(2)
 
     if len(committed_epochs) != DELAY:
         raise Exception(f"uh oh wrong nuber of epoch {epoch}")

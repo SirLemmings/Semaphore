@@ -253,7 +253,8 @@ class Node:
                         cfg.activation_epoch = cfg.current_epoch
                         cfg.bootstrapping = True
                         cfg.bootstrapped_epoch = (
-                            cfg.current_epoch + cfg.DELAY * 2 * cfg.EPOCH_TIME
+                            cfg.current_epoch
+                            + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME+5
                         )
                         epochs = [
                             epoch

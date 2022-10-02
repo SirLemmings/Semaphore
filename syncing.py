@@ -78,5 +78,4 @@ def conclude_history_process(process):
             return
 
     cfg.staged_sync_blocks = blocks
-    cfg.sync_blocks_staged = True
 

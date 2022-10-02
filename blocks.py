@@ -157,6 +157,8 @@ class Block:
         output["sig_body"] = self.sig_body
         return output
 
+    
+
     def check_block_valid(self):
         """checks that all the contents of a block are valid"""
         return True
