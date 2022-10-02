@@ -83,7 +83,7 @@ temp_staged_block_updates = []
 
 epoch_chain_commit = bidict({})  # {epoch:chain_commit}
 
-GENESIS = range(DELAY * 2 - 1)
+GENESIS = range(DELAY)
 blocks = {i * EPOCH_TIME: "GENESIS" for i in GENESIS}  # {epoch: block}
 epochs = [i * EPOCH_TIME for i in GENESIS]
 hashes = bidict({i * EPOCH_TIME: str(i) for i in GENESIS})  # {epoch: hash}
@@ -96,71 +96,71 @@ temp_hashes = bidict({})
 staged_sync_blocks = []
 
 
-def chain_commitment(epoch, where=None):
-    if synced:
-        eps = epochs
-        hs = hashes
-    else:
-        eps = temp_epochs
-        hs = temp_hashes
+# def chain_commitment(epoch, where=None):
+#     if synced:
+#         eps = epochs
+#         hs = hashes
+#     else:
+#         eps = temp_epochs
+#         hs = temp_hashes
 
-    earliest_process_epoch = (
-        current_epoch - (SLACK_EPOCHS + VOTE_MAX_EPOCHS + SYNC_EPOCHS) * EPOCH_TIME
-    )
-    last_commit_epoch = epoch - DELAY * EPOCH_TIME
+#     earliest_process_epoch = (
+#         current_epoch - (SLACK_EPOCHS + VOTE_MAX_EPOCHS + SYNC_EPOCHS) * EPOCH_TIME
+#     )
+#     last_commit_epoch = epoch - DELAY * EPOCH_TIME
 
-    if epoch not in eps and epoch < earliest_process_epoch:
-        print(epoch, earliest_process_epoch)
-        raise Exception("skipped epoch")
-    if last_commit_epoch > earliest_process_epoch:
-        raise Exception("insufficient blocks confirmed")
+#     if epoch not in eps and epoch < earliest_process_epoch:
+#         print(epoch, earliest_process_epoch)
+#         raise Exception("skipped epoch")
+#     if last_commit_epoch > earliest_process_epoch:
+#         raise Exception("insufficient blocks confirmed")
 
-    if (
-        not bootstrapping
-    ):  # once synced a chain commitment is made even if there is no block
-        # eps = sorted(list(epoch_chain_commit.keys()))
-        eps = list(range(last_commit_epoch-EPOCH_TIME*DELAY*2, last_commit_epoch + EPOCH_TIME, EPOCH_TIME))#There are extra elements here 
-        last_index = eps.index(last_commit_epoch)
-        committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
-            last_commit_epoch
-        ]
+#     if (
+#         not bootstrapping
+#     ):  # once synced a chain commitment is made even if there is no block
+#         # eps = sorted(list(epoch_chain_commit.keys()))
+#         eps = list(range(last_commit_epoch-EPOCH_TIME*DELAY*2, last_commit_epoch + EPOCH_TIME, EPOCH_TIME))#There are extra elements here 
+#         last_index = eps.index(last_commit_epoch)
+#         committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
+#             last_commit_epoch
+#         ]
 
-    else:  # these may be redundant with above, but i dont want to break things rn
-        print(bootstrapping)
-        if last_commit_epoch in eps:
-            last_index = eps.index(last_commit_epoch)
-            committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
-                last_commit_epoch
-            ]
-            print(1)
-        else:
-            if epoch in chain_commit_offset:
-                offset = chain_commit_offset[epoch]
-            else:
-                offset = 0
-            committed_epochs = eps[-DELAY - offset :]
-            committed_epochs = committed_epochs[:DELAY]
-            print(2)
+#     else:  # these may be redundant with above, but i dont want to break things rn
+#         print(bootstrapping)
+#         if last_commit_epoch in eps:
+#             last_index = eps.index(last_commit_epoch)
+#             committed_epochs = eps[last_index - DELAY + 1 : last_index] + [
+#                 last_commit_epoch
+#             ]
+#             print(1)
+#         else:
+#             if epoch in chain_commit_offset:
+#                 offset = chain_commit_offset[epoch]
+#             else:
+#                 offset = 0
+#             committed_epochs = eps[-DELAY - offset :]
+#             committed_epochs = committed_epochs[:DELAY]
+#             print(2)
 
-    if len(committed_epochs) != DELAY:
-        raise Exception(f"uh oh wrong nuber of epoch {epoch}")
+#     if len(committed_epochs) != DELAY:
+#         raise Exception(f"uh oh wrong nuber of epoch {epoch}")
 
-    com_hashes = [hs[epoch] for epoch in committed_epochs]
-    # com_hashes = [
-    #     hs[epoch] if epoch in hs else epoch_chain_commit[epoch]
-    #     for epoch in committed_epochs
-    # ]
-    if where == "ep":
-        print([h[:6] for h in com_hashes])
-        # print([epoch_chain_commit[e][:6] for e in sorted(epoch_chain_commit)])
-        # print([hashes[h][:6] for h in sorted(hashes)])
-    commitment = ""
-    for com_hash in com_hashes:
-        commitment += com_hash
-    if where == "ep":
-        return (
-            hashlib.sha256(commitment.encode()).hexdigest(),
-            [epoch for epoch in committed_epochs],
-        )
-    return hashlib.sha256(commitment.encode()).hexdigest()
+#     com_hashes = [hs[epoch] for epoch in committed_epochs]
+#     # com_hashes = [
+#     #     hs[epoch] if epoch in hs else epoch_chain_commit[epoch]
+#     #     for epoch in committed_epochs
+#     # ]
+#     if where == "ep":
+#         print([h[:6] for h in com_hashes])
+#         # print([epoch_chain_commit[e][:6] for e in sorted(epoch_chain_commit)])
+#         # print([hashes[h][:6] for h in sorted(hashes)])
+#     commitment = ""
+#     for com_hash in com_hashes:
+#         commitment += com_hash
+#     if where == "ep":
+#         return (
+#             hashlib.sha256(commitment.encode()).hexdigest(),
+#             [epoch for epoch in committed_epochs],
+#         )
+#     return hashlib.sha256(commitment.encode()).hexdigest()
 

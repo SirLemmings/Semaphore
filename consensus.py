@@ -3,6 +3,7 @@ import blocks as bk
 import json
 import os
 import syncing as sy
+import hashlib
 
 
 def load_block_data(block):
@@ -18,7 +19,6 @@ def load_block_data(block):
     for epoch in cfg.chain_commit_offset:
         if cfg.chain_commit_offset[epoch] > 0:
             cfg.chain_commit_offset[epoch] -= 1
-
 
 
 def temp_load_block_data(block):
@@ -105,16 +105,48 @@ def sync_func(blocks):
 
     cfg.activation_epoch = cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
     cfg.synced = True
+
+    print("111111")
+    print(cfg.epochs)
+    print(cfg.indexes)
     for epoch in cfg.epoch_processes.keys():
-        cfg.epoch_chain_commit[epoch] = cfg.chain_commitment(epoch)
+        i = epoch - (cfg.DELAY) * cfg.EPOCH_TIME
+        print('ep',epoch)
+        while True:
+            print('i',i)
+            if i in cfg.indexes:
+                print('ok^')
+                break
+            i-=cfg.EPOCH_TIME
+        index = cfg.indexes[i]+1
+        print('index',index)
+        epochs = cfg.epochs[index - cfg.DELAY : index]
+        cfg.epoch_chain_commit[epoch] = chain_commitment(
+            epoch, epochs=epochs, origin="ep"
+        )
+        print(cfg.epoch_chain_commit[epoch])
+        print()
     print("***SYNCED***")
 
-def chain_commitment(epoch, epochs = cfg.epochs, hashes=cfg.hashes, origin=None):
+
+def chain_commitment(epoch, epochs=cfg.epochs, hashes=cfg.hashes, origin=None):
     earliest_process_epoch = (
-        cfg.current_epoch - (cfg.SLACK_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SYNC_EPOCHS) * cfg.EPOCH_TIME
+        cfg.current_epoch
+        - (cfg.SLACK_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SYNC_EPOCHS) * cfg.EPOCH_TIME
     )
     last_commit_epoch = epoch - cfg.DELAY * cfg.EPOCH_TIME
 
     if last_commit_epoch > earliest_process_epoch:
         raise Exception("insufficient blocks confirmed")
-    
+
+    committed_hashes = [hashes[i] for i in epochs[-cfg.DELAY :]]
+    if origin == "ep":
+        print(epochs[-cfg.DELAY :], epoch)
+    commitment = ""
+    for com_hash in committed_hashes:
+        commitment += com_hash
+    chain_commitment = hashlib.sha256(commitment.encode()).hexdigest()
+    diff = int((epoch - epochs[-1]) / cfg.EPOCH_TIME) % cfg.DELAY
+    chain_commitment += f"{diff:02d}"
+    return chain_commitment
+

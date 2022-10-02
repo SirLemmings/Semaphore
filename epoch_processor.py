@@ -4,6 +4,7 @@ from build_processor import BuildProcessor
 import config as cfg
 import connections as cn
 import broadcasts as bc
+import consensus as cs
 
 EPOCH_VOTE_DELAY = (cfg.FORWARD_SLACK_EPOCHS + cfg.SLACK_EPOCHS) * cfg.EPOCH_TIME
 BUILD_DELAY = (
@@ -26,15 +27,21 @@ class EpochProcessor:
         self.time_alive = 0
         if epoch >= cfg.committed_epoch:
             try:
-                cfg.epoch_chain_commit[self.epoch], self.test = cfg.chain_commitment(
-                    self.epoch, where="ep"
-                )
+                if cfg.synced:
+                    cfg.epoch_chain_commit[self.epoch] = cs.chain_commitment(
+                        self.epoch, origin="ep"
+                    )
+                else:
+                    cfg.epoch_chain_commit[self.epoch] = cs.chain_commitment(
+                        self.epoch, epochs=cfg.temp_epochs, hashes=cfg.temp_hashes, origin="ep"
+                    )
             except Exception as e:
                 print()
                 print("~", cfg.epoch_chain_commit)
                 print(list(cfg.epoch_chain_commit.keys()))
                 print()
                 raise e
+            print(cfg.epoch_chain_commit[self.epoch])
 
     def step(self):
         """update processor at the end of each epoch"""
@@ -53,7 +60,7 @@ class EpochProcessor:
                 print("***BOOTSTRAPPED***")
 
         elif self.time_alive == BUILD_DELAY:
-            confirmed_bc,sync_commit = self.processor.terminate_vote()
+            confirmed_bc = self.processor.terminate_vote()
             if cfg.SHOW_CONF_BC and self.epoch % (cfg.EPOCH_TIME * 2) == 0:
                 print("CONFIRMED BROADCASTS:")
                 output = []
@@ -63,7 +70,7 @@ class EpochProcessor:
                     output.append((alias, bcid))
                 for i in sorted(output):
                     print(f"{i[0]}: {i[1]}")
-            self.processor = BuildProcessor(self.epoch, confirmed_bc,sync_commit)
+            self.processor = BuildProcessor(self.epoch, confirmed_bc)
             self.state = "sync"
         elif self.time_alive == EPOCH_VOTE_DELAY:
             seen_bc = self.processor.seen_bc

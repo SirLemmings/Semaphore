@@ -45,7 +45,6 @@ class VoteProcessor:
         self.rejected_commits = set()
         self.rejected_bcids = set()
         self.rejected_peers = set()
-        self.sync_commit = None
         Thread(target=self.s.run, name=f"vote_{self.epoch}").start()
 
     def execute_vote(self):
@@ -97,8 +96,7 @@ class VoteProcessor:
         response = ast.literal_eval(response)
         received_acks = response[0]
         commit = response[1]
-        if not cfg.activated:
-            self.sync_commit = commit#TODO put something syble resistant
+        
         if cfg.synced and (cfg.activated or cfg.enforce_chain):
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 if received_acks == {}:
@@ -106,6 +104,9 @@ class VoteProcessor:
                 if type(received_acks) is set:
                     return received_acks
             else:
+                print('wrong commit')
+                print(commit)
+                print(cfg.epoch_chain_commit[self.epoch])
                 return "wrong_commit"
         else:
             if received_acks == {}:
@@ -229,18 +230,21 @@ class VoteProcessor:
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 self.broadcasts[bcid] = broadcast
             else:
+                print("REJECTED")
+                print(commit)
+                print(cfg.epoch_chain_commit[self.epoch])
                 self.rejected_bcids.add(bcid)
                 self.rejected_peers.add(alias)
             # Check it is on your commit
         elif cfg.enforce_chain:
-            if commit in self.seen_commits:
+            if commit[:64] in self.seen_commits:
                 self.broadcasts[bcid] = broadcast
-            elif commit in self.rejected_commits:
+            elif commit[:64] in self.rejected_commits:
                 self.rejected_bcids.add(bcid)
-            elif commit not in self.requested_commits_this_round:
+            elif commit[:64] not in self.requested_commits_this_round:
                 self.request_history(alias)
-                self.pending_commits.add(commit)
-                self.requested_commits_this_round.add(commit)
+                self.pending_commits.add(commit[:64])
+                self.requested_commits_this_round.add(commit[:64])
         else:
             self.broadcasts[bcid] = broadcast
 
@@ -306,10 +310,10 @@ class VoteProcessor:
         Parameters:
             epoch (int): The epoch of broadcasts that was voted on
         """
-        print('~final bc',self.broadcasts)
+        # print('~final bc',self.broadcasts)
         if self.execute:
             self.execute = False
-            return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0], self.sync_commit
+            return [self.broadcasts[bc] for bc in self.broadcasts if self.confs[bc] > 0]
         return None
 
     def accomodate_missing_bc(self, acks_union, peers_responeded):

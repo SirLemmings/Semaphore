@@ -1,7 +1,7 @@
 {
     "ALIAS_LEN": 10,
     "SIG_LEN": 128,
-    "CHAIN_COMMIT_LEN": 64,
+    "CHAIN_COMMIT_LEN": 66,
     "INDICATOR_LEN": 3,
     "HEADER_LENGTH": 10,
     "TIME_BASE_OFFSET": 0,

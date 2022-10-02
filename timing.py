@@ -59,8 +59,10 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        print(sorted(cfg.hashes))
-        print(sorted(cfg.temp_hashes))
+        # print(cfg.epochs)
+        # print(cfg.indexes)
+        # print(sorted(cfg.hashes))
+        # print(sorted(cfg.temp_hashes))
 
     if cfg.initialized:
         #Handle the processing of each active epoch
@@ -81,7 +83,7 @@ def run_epoch():
             #Send test broadcast each epoch
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
-                    if random.random() > -5 or cfg.bootstrapping:
+                    if random.random() < .7 or cfg.bootstrapping:
                         cm.originate_broadcast("test")
 
             #delete epoch processor when epoch is no longer active
