@@ -12,7 +12,6 @@ class BuildProcessor:
         if self.broadcasts is not None and len(self.broadcasts) > 0:
             self.block = bk.Block(self.broadcasts, self.epoch)
         else:
-            print("~EMPTY EPOCH")
             if self.epoch in cfg.epoch_chain_commit:
                 del cfg.epoch_chain_commit[self.epoch]
             # 
@@ -20,6 +19,7 @@ class BuildProcessor:
     def finalize_block(self):
         """add final block to chain"""
         if self.block is None:
+            print("~EMPTY EPOCH")
             return
         cs.add_block(self.block, self.epoch)
         if cfg.SHOW_BLOCK_INFO:

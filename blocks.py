@@ -67,7 +67,10 @@ def verify_proof(proof: tuple) -> bool:
         node = sha_hash(preimage)
     return node == path[-1]
 
-
+def verify_block_chain(blocks):
+    for block in blocks:
+        block.check_block_valid()
+        block.check_chain_commitment()
 class Block:
     def __init__(self, broadcasts=None, epoch=None, init_dict=None):
         """Create a block from a set of broadcasts or from a dict"""
@@ -88,24 +91,30 @@ class Block:
                 for bc in bc_data
             ]  # removes chain commitment from each broadcast
 
-            if len(broadcasts) > 0:
-                bc_data = [
-                    broadcast for _, broadcast in sorted(zip(alias_list, bc_data))
-                ]
-                sig_data = [bc["signature"] for bc in data]
-                sig_data = [bc for _, bc in sorted(zip(alias_list, sig_data))]
-                bc_tree = build_merkle_tree(bc_data)
-                sig_tree = build_merkle_tree(sig_data)
 
-                self.bc_root = bc_tree[0][0]
-                self.sig_root = sig_tree[0][0]
-                self.bc_body = bc_tree[-1]
-                self.sig_body = sig_tree[-1]
-            else:
-                self.bc_root = "None"
-                self.sig_root = "None"
-                self.bc_body = "None"
-                self.sig_body = "None"
+            bc_data = [
+                broadcast for _, broadcast in sorted(zip(alias_list, bc_data))
+            ]
+            sig_data = [bc["signature"] for bc in data]
+            sig_data = [bc for _, bc in sorted(zip(alias_list, sig_data))]
+
+            #remove duplicate aliases/broadcasts
+            prev_alias = None
+            for alias,bc1,sig in zip(sorted(alias_list),bc_data,sig_data):
+                if alias==prev_alias:
+                    alias_list.remove(alias)
+                    bc_data.remove(bc1)
+                    sig_data.remove(sig)
+                prev_alias = alias
+
+            bc_tree = build_merkle_tree(bc_data)
+            sig_tree = build_merkle_tree(sig_data)
+
+            self.bc_root = bc_tree[0][0]
+            self.sig_root = sig_tree[0][0]
+            self.bc_body = bc_tree[-1]
+            self.sig_body = sig_tree[-1]
+
 
             # ***SANITYCHECK***
             commit = (

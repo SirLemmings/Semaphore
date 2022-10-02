@@ -106,26 +106,26 @@ def sync_func(blocks):
     cfg.activation_epoch = cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
     cfg.synced = True
 
-    print("111111")
-    print(cfg.epochs)
-    print(cfg.indexes)
+    # print("111111")
+    # print(cfg.epochs)
+    # print(cfg.indexes)
     for epoch in cfg.epoch_processes.keys():
         i = epoch - (cfg.DELAY) * cfg.EPOCH_TIME
-        print('ep',epoch)
+        # print('ep',epoch)
         while True:
-            print('i',i)
+            # print('i',i)
             if i in cfg.indexes:
-                print('ok^')
+                # print('ok^')
                 break
             i-=cfg.EPOCH_TIME
         index = cfg.indexes[i]+1
-        print('index',index)
+        # print('index',index)
         epochs = cfg.epochs[index - cfg.DELAY : index]
         cfg.epoch_chain_commit[epoch] = chain_commitment(
             epoch, epochs=epochs, origin="ep"
         )
-        print(cfg.epoch_chain_commit[epoch])
-        print()
+        # print(cfg.epoch_chain_commit[epoch])
+        # print()
     print("***SYNCED***")
 
 
@@ -140,8 +140,8 @@ def chain_commitment(epoch, epochs=cfg.epochs, hashes=cfg.hashes, origin=None):
         raise Exception("insufficient blocks confirmed")
 
     committed_hashes = [hashes[i] for i in epochs[-cfg.DELAY :]]
-    if origin == "ep":
-        print(epochs[-cfg.DELAY :], epoch)
+    # if origin == "ep":
+        # print(epochs[-cfg.DELAY :], epoch)
     commitment = ""
     for com_hash in committed_hashes:
         commitment += com_hash

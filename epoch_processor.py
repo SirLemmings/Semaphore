@@ -41,7 +41,7 @@ class EpochProcessor:
                 print(list(cfg.epoch_chain_commit.keys()))
                 print()
                 raise e
-            print(cfg.epoch_chain_commit[self.epoch])
+            # print(cfg.epoch_chain_commit[self.epoch])
 
     def step(self):
         """update processor at the end of each epoch"""
