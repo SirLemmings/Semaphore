@@ -99,16 +99,20 @@ class Block:
             sig_data = [bc for _, bc in sorted(zip(alias_list, sig_data))]
 
             #remove duplicate aliases/broadcasts
-            prev_alias = None
-            for alias,bc1,sig in zip(sorted(alias_list),bc_data,sig_data):
-                if alias==prev_alias:
-                    alias_list.remove(alias)
-                    bc_data.remove(bc1)
-                    sig_data.remove(sig)
-                prev_alias = alias
+     
+            seen_aliases = set()
+            bc_data_filtered=[]
+            sig_data_filtered=[]
+            for alias,broadcast,sig in zip(sorted(alias_list),bc_data,sig_data):
+                if alias not in seen_aliases:
+                    bc_data_filtered.append(broadcast)
+                    sig_data_filtered.append(sig)
+                    seen_aliases.add(alias)
+ 
+            # print(sig_data)
 
-            bc_tree = build_merkle_tree(bc_data)
-            sig_tree = build_merkle_tree(sig_data)
+            bc_tree = build_merkle_tree(bc_data_filtered)
+            sig_tree = build_merkle_tree(sig_data_filtered)
 
             self.bc_root = bc_tree[0][0]
             self.sig_root = sig_tree[0][0]
