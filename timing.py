@@ -82,8 +82,8 @@ def run_epoch():
         if cfg.current_epoch > 0:
             #Send test broadcast each epoch
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
-                for i in range(2):
-                    if random.random() < 1 or cfg.bootstrapping:
+                for i in range(1):
+                    if random.random() < .5 or cfg.bootstrapping:
                         cm.originate_broadcast(f"sync{i}")
 
             #delete epoch processor when epoch is no longer active

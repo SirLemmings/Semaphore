@@ -117,8 +117,8 @@ def sync_func(blocks):
             if i in cfg.indexes:
                 # print('ok^')
                 break
-            i-=cfg.EPOCH_TIME
-        index = cfg.indexes[i]+1
+            i -= cfg.EPOCH_TIME
+        index = cfg.indexes[i] + 1
         # print('index',index)
         epochs = cfg.epochs[index - cfg.DELAY : index]
         cfg.epoch_chain_commit[epoch] = chain_commitment(
@@ -141,12 +141,19 @@ def chain_commitment(epoch, epochs=cfg.epochs, hashes=cfg.hashes, origin=None):
 
     committed_hashes = [hashes[i] for i in epochs[-cfg.DELAY :]]
     # if origin == "ep":
-        # print(epochs[-cfg.DELAY :], epoch)
-    commitment = ""
-    for com_hash in committed_hashes:
-        commitment += com_hash
-    chain_commitment = hashlib.sha256(commitment.encode()).hexdigest()
+    # print(epochs[-cfg.DELAY :], epoch)
+    chain_commitment = hash_commitments(committed_hashes)
     diff = int((epoch - epochs[-1]) / cfg.EPOCH_TIME) % cfg.DELAY
     chain_commitment += f"{diff:02d}"
     return chain_commitment
 
+
+def hash_commitments(committed_hashes):
+    if len(committed_hashes) != cfg.DELAY:
+        raise Exception(
+            f"committed_hashes not of length {cfg.DELAY}. got length of {len(committed_hashes)}"
+        )
+    commitment = ""
+    for com_hash in committed_hashes:
+        commitment += com_hash
+    return hashlib.sha256(commitment.encode()).hexdigest()

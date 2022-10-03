@@ -65,6 +65,11 @@ def format_message(msg):
     message = msg.encode("utf-8")
     return header + message
 
+def verify_broadcast_rules(message):
+    if not verify_message_sig:
+        return False
+    #other rulese
+    return True
 
 def verify_message_sig(message):
     """
@@ -111,7 +116,8 @@ def check_broadcast_validity(broadcast,) -> bool:
     if epoch > cfg.current_epoch + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME:
         print("invalid 3")
         return False
-    return verify_message_sig(broadcast)
+    return verify_broadcast_rules(broadcast)
+    # return verify_message_sig(broadcast)
 
 
 def check_broadcast_validity_vote(broadcast, vote_epoch) -> bool:
@@ -123,9 +129,11 @@ def check_broadcast_validity_vote(broadcast, vote_epoch) -> bool:
             chain_commit != cfg.epoch_chain_commit[vote_epoch]
         ):
             return False
-        return verify_message_sig(broadcast)
+        return verify_broadcast_rules(broadcast)
+        # return verify_message_sig(broadcast)
     else:
-        return verify_message_sig(broadcast)
+        return verify_broadcast_rules(broadcast)
+        # return verify_message_sig(broadcast)
 
 
 def split_broadcast(broadcast: str):

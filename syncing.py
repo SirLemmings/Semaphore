@@ -61,10 +61,10 @@ def conclude_history_process(process):
         print("got no block")
         return
     blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
-    for block in blocks:
-        if not block.check_block_valid():
-            print("bad block")
-            return
+
+    if not bk.verify_block_chain(blocks):
+        return
+    
     for block in blocks[-cfg.DELAY :]:
         if (
             block.block_hash != cfg.temp_hashes[block.epoch_timestamp]
