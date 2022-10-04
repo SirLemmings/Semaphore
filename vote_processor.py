@@ -180,7 +180,7 @@ class VoteProcessor:
             bcid (str): The ID of the missing broadcast
             epoch (int): The epoch that the missing broadcast belongs to 
         """
-        print("request", bcid)
+        # print("request", bcid)
         Process(
             1,
             VoteProcessor.format_bc_response,
@@ -222,11 +222,11 @@ class VoteProcessor:
             pr.remove_peer(alias)
             return
         if bcid in self.broadcasts:
-            print("ignore", bcid, 1)
+            # print("ignore", bcid, 1)
             return
         if not bc.check_broadcast_validity_vote(broadcast, self.epoch):
             self.rejected_bcids.add(bcid)
-            print("reject", bcid, 2)
+            # print("reject", bcid, 2)
             return
         commit = bc.split_broadcast(broadcast)["chain_commit"]
         # print("processing2", bcid)
@@ -234,7 +234,7 @@ class VoteProcessor:
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 self.broadcasts[bcid] = broadcast
             else:
-                print("reject", bcid, 3)
+                # print("reject", bcid, 3)
                 print("REJECTED")
                 print(commit)
                 print(cfg.epoch_chain_commit[self.epoch])
@@ -243,13 +243,13 @@ class VoteProcessor:
             # Check it is on your commit
         elif cfg.enforce_chain:
             if commit[:64] in self.seen_commits:
-                print("accept", bcid)
+                # print("accept", bcid)
                 self.broadcasts[bcid] = broadcast
             elif commit[:64] in self.rejected_commits:
-                print("reject", bcid, 4)
+                # print("reject", bcid, 4)
                 self.rejected_bcids.add(bcid)
             elif commit[:64] not in self.requested_commits_this_round:
-                print("pending", bcid)
+                # print("pending", bcid)
                 self.request_history(alias)
                 self.pending_commits.add(commit[:64])
                 self.requested_commits_this_round.add(commit[:64])

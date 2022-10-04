@@ -37,7 +37,7 @@ def request_fork_history(alias):
 
 
 def fulfill_fork_request(alias, query_id, past):
-    print("~fulfilling fork")
+    # print("~fulfilling fork")
     if cfg.activated:
         if (
             len(past[0]) > 0
@@ -54,8 +54,8 @@ def fulfill_fork_request(alias, query_id, past):
         
         #TODO pretty sure this works right but actually dont know for sure
         for block_hash in past_hashes[1:]:
-            print("~index", index)
-            print(print("~start epoch", cfg.epochs[index]))
+            # print("~index", index)
+            # print(print("~start epoch", cfg.epochs[index]))
             if block_hash in cfg.epoch_chain_commit.keys():
                 shared_epoch = past_epochs[past_hashes.index(block_hash)]
                 if cfg.hashes[shared_epoch] != block_hash:
@@ -65,9 +65,9 @@ def fulfill_fork_request(alias, query_id, past):
                 break
 
         history_epochs = cfg.epochs[index:]
-        print('~epochs',cfg.epochs)
-        print("~index", index)
-        print("~start epoch", cfg.epochs[index])
+        # print('~epochs',cfg.epochs)
+        # print("~index", index)
+        # print("~start epoch", cfg.epochs[index])
         history_blocks = []
         for epoch in history_epochs:
             block = cfg.blocks[epoch]
@@ -82,7 +82,7 @@ def fulfill_fork_request(alias, query_id, past):
 
 
 def format_fork_request(query, response):
-    print("~formatting fork")
+    # print("~formatting fork")
     received_blocks = ast.literal_eval(response)
     if type(received_blocks) is list:
         for block in received_blocks:
@@ -92,7 +92,7 @@ def format_fork_request(query, response):
 
 
 def conclude_fork_process(process):
-    print("~concluding fork")
+    # print("~concluding fork")
     blocks = process.cached_responses[0]
     for block in blocks:
         if type(block) is bk.Block:
@@ -159,11 +159,11 @@ def remove_history(last_common_epoch):
 
 
 def compare_weight(alt_blocks, last_common_epoch):
-    print('fc')
-    print(last_common_epoch)
-    print(cfg.epochs)
-    print(cfg.epochs.index(last_common_epoch) + 1)
-    print(cfg.epochs[cfg.epochs.index(last_common_epoch) + 1 :])
+    # print('fc')
+    # print(last_common_epoch)
+    # print(cfg.epochs)
+    # print(cfg.epochs.index(last_common_epoch) + 1)
+    # print(cfg.epochs[cfg.epochs.index(last_common_epoch) + 1 :])
     # print(cfg.epochs)
     current_blocks = [
         block
