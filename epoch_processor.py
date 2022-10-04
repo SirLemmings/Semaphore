@@ -28,8 +28,10 @@ class EpochProcessor:
         if epoch >= cfg.committed_epoch:
             try:
                 if cfg.synced:
+                    #NOTE VERY CRAZY THIS DOES NOT PASS THE RIGHT VALUE OF CFG.EPOCH
+                    #TODO FIGURE OUT WHAT THE HELL IS GOING ON HERE
                     print('cc synced')
-                    print(cfg.epochs)
+                    print('EPOCHS1',cfg.epochs)
                     cfg.epoch_chain_commit[self.epoch] = cs.chain_commitment(
                         self.epoch, origin="ep"
                     )

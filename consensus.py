@@ -143,8 +143,10 @@ def sync_func(blocks):
 def chain_commitment(epoch, epochs=cfg.epochs, hashes=cfg.hashes, origin=None):
     if origin == "ep":
         print("cc info")
-        print(epochs)
-        print(cfg.epochs)
+        print('EPOCHS2',epochs)
+        print('EPOCHS3',cfg.epochs)
+        if (epochs)!=(cfg.epochs):
+            print('is broke')
     earliest_process_epoch = (
         cfg.current_epoch
         - (cfg.SLACK_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SYNC_EPOCHS) * cfg.EPOCH_TIME
