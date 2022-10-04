@@ -1,4 +1,7 @@
 import ast
+from typing import List
+
+from sympy import EX
 import consensus as cs
 import hashlib
 import config as cfg
@@ -102,18 +105,30 @@ class VoteProcessor:
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 if received_acks == {}:
                     received_acks = set()
-                if type(received_acks) is set:
-                    return received_acks
+                if type(received_acks) is not set:
+                    print('~23')
+                    raise Exception("received_acks not a set")
+                for ack in received_acks:
+                    if len(ack) != 64:
+                        print('~24')
+                        raise Exception("ack wrong length")
+                return received_acks
             else:
-                print("wrong commit")
-                print(commit)
-                print(cfg.epoch_chain_commit[self.epoch])
+                # print("wrong commit")
+                # print(commit)
+                # print(cfg.epoch_chain_commit[self.epoch])
                 return "wrong_commit"
         else:
             if received_acks == {}:
                 received_acks = set()
-            if type(received_acks) is set:
-                return received_acks
+            if type(received_acks) is not set:
+                print('~25')
+                raise Exception("received_acks not a set")
+            for ack in received_acks:
+                if len(ack) != 64:
+                    print('~26')
+                    raise Exception("ack wrong length")
+            return received_acks
 
     def conclude_vote_process(self, process):
         """incorporate information for round of epoch vote"""
@@ -209,8 +224,13 @@ class VoteProcessor:
     def format_bc_response(query, response):
         """format recieved string to list"""
         response = ast.literal_eval(response)
-        if type(response) is list:
-            return response
+        if type(response) is not list:
+            print('~27')
+            raise Exception("response is not list")
+        if len(response[0]) != 64:
+            print('~28')
+            raise Exception("bcid len incorrect")
+        return response
 
     def conclude_bc_process(self, process):
         """incorporate data from missing bc request"""
@@ -276,11 +296,38 @@ class VoteProcessor:
         if response == "no_block":
             return response
         received_blocks = ast.literal_eval(response)
-        if type(received_blocks) is list:
-            for block in received_blocks:
-                if type(block) is not dict:
-                    return
-            return received_blocks
+        if type(received_blocks) is not list:
+            print('~29')
+            raise Exception("blocks is not a list")
+        for block in received_blocks:
+            if type(block) is not dict:
+                raise Exception("block is not a dict")
+            if set(block.keys()) != {
+                "block_index",
+                "chain_commitment",
+                "epoch_timestamp",
+                "bc_root",
+                "sig_root",
+                "bc_body",
+                "sig_body",
+            }:
+                print('~30')
+                raise Exception("block keys are incorrect")
+            int(block["block_index"])
+            if len(block["chain_commitment"]) != cfg.CHAIN_COMMIT_LEN:
+                print('~31')
+                raise Exception("chain_commit len wrong")
+            int(block["epoch_timestamp"])
+            if len(block["bc_root"]) != 64 or len(block["sig_root"]) != 64:
+                print('~32')
+                raise Exception("root len incorrect")
+            if (
+                type(block["bc_body"]) is not list
+                or type(block["sig_body"]) is not list
+            ):
+                print('~33')
+                raise Exception("body is not list")
+        return received_blocks
 
     def conclude_history_process(self, process):
         if process.cached_responses[0] == "no_block":
@@ -293,12 +340,12 @@ class VoteProcessor:
             if False:  # TODO do correct check
                 print("bad block")
                 return
-        if len(blocks)>0:
+        if len(blocks) > 0:
             additional_epochs = [
                 epoch for epoch in cfg.epochs if epoch < blocks[0].epoch_timestamp
             ][-cfg.DELAY :]
         else:
-            additional_epochs = cfg.epochs[-cfg.DELAY:]
+            additional_epochs = cfg.epochs[-cfg.DELAY :]
         block_hashes = [cfg.hashes[epoch] for epoch in additional_epochs]
         test_count = 0
 

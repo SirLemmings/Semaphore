@@ -117,8 +117,6 @@ class EpochProcessor:
 
     def find_func(self, func):
         """given the type of process return the correct function of child processor"""
-        if func == "block_request":
-            func = self.processor.fulfill_block_request
         if func == "relay":
             func = self.processor.handle_relay
         if func == "bc_request":

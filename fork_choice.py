@@ -1,3 +1,4 @@
+from sympy import EX
 import config as cfg
 import communications as cm
 import consensus as cs
@@ -22,9 +23,7 @@ def request_fork_history(alias):
         except:
             break
 
-    past_hashes = [
-        cfg.hashes[epoch] for epoch in past_epochs if epoch > cfg.DELAY - 1
-    ]
+    past_hashes = [cfg.hashes[epoch] for epoch in past_epochs if epoch > cfg.DELAY - 1]
     Process(
         1,
         format_fork_request,
@@ -50,9 +49,9 @@ def fulfill_fork_request(alias, query_id, past):
         else:
             past_hashes = past[0]
             past_epochs = past[0]
-        index = cfg.DELAY -1
-        
-        #TODO pretty sure this works right but actually dont know for sure
+        index = cfg.DELAY - 1
+
+        # TODO pretty sure this works right but actually dont know for sure
         for block_hash in past_hashes[1:]:
             # print("~index", index)
             # print(print("~start epoch", cfg.epochs[index]))
@@ -84,11 +83,41 @@ def fulfill_fork_request(alias, query_id, past):
 def format_fork_request(query, response):
     # print("~formatting fork")
     received_blocks = ast.literal_eval(response)
-    if type(received_blocks) is list:
-        for block in received_blocks:
-            if type(block) is not dict and block != "GENESIS":
-                return
-        return received_blocks
+    if type(received_blocks) is not list:
+        raise Exception("reveiced_blocks is not list")
+    for block in received_blocks:
+        if type(block) is dict:
+            if set(block.keys()) != {
+                "block_index",
+                "chain_commitment",
+                "epoch_timestamp",
+                "bc_root",
+                "sig_root",
+                "bc_body",
+                "sig_body",
+            }:
+                print('~2')
+                raise Exception("block keys are incorrect")
+            int(block["block_index"])
+            if len(block["chain_commitment"]) != cfg.CHAIN_COMMIT_LEN:
+                print('~3')
+                raise Exception("chain_commit len wrong")
+            int(block["epoch_timestamp"])
+            if len(block["bc_root"]) != 64 or len(block["sig_root"]) != 64:
+                print('~4')
+                raise Exception("root len incorrect")
+            if (
+                type(block["bc_body"]) is not list
+                or type(block["sig_body"]) is not list
+            ):
+                print('~5')
+                raise Exception("body is not list")
+        elif block == "GENESIS":
+            pass
+        else:
+            print('~6')
+            raise Exception("block is of wrong type")
+    return received_blocks
 
 
 def conclude_fork_process(process):
@@ -142,11 +171,11 @@ def conclude_fork_process(process):
 
 
 def remove_history(last_common_epoch):
-    print('bef',cfg.epochs[:15])
+    print("bef", cfg.epochs[:15])
     index = cfg.epochs.index(last_common_epoch) + 1
     for epoch in cfg.epochs[index:]:
         if cfg.blocks[epoch] == "GENESIS":
-            index+=1
+            index += 1
             continue
         del cfg.blocks[epoch]
         del cfg.hashes[epoch]
@@ -154,8 +183,7 @@ def remove_history(last_common_epoch):
         name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
         os.remove(name)
     cfg.epochs = cfg.epochs[:index]
-    print('aft',cfg.epochs[:15])
-    
+    print("aft", cfg.epochs[:15])
 
 
 def compare_weight(alt_blocks, last_common_epoch):

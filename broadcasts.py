@@ -151,18 +151,22 @@ def split_broadcast(broadcast: str):
         signature (str): the signature for the entire broadcast
         sig_image (str): the broadcast image that is signed
     """
-    orig = broadcast
-    signature, broadcast = broadcast[: cfg.SIG_LEN], broadcast[cfg.SIG_LEN :]
-    sig_image = broadcast
-    alias, broadcast = broadcast[: cfg.ALIAS_LEN], broadcast[cfg.ALIAS_LEN :]
-    chain_commit, broadcast = (
-        broadcast[: cfg.CHAIN_COMMIT_LEN],
-        broadcast[cfg.CHAIN_COMMIT_LEN :],
-    )
-    indicator, broadcast = (
-        broadcast[: cfg.INDICATOR_LEN],
-        broadcast[cfg.INDICATOR_LEN :],
-    )
+    try:
+        orig = broadcast
+        signature, broadcast = broadcast[: cfg.SIG_LEN], broadcast[cfg.SIG_LEN :]
+        sig_image = broadcast
+        alias, broadcast = broadcast[: cfg.ALIAS_LEN], broadcast[cfg.ALIAS_LEN :]
+        chain_commit, broadcast = (
+            broadcast[: cfg.CHAIN_COMMIT_LEN],
+            broadcast[cfg.CHAIN_COMMIT_LEN :],
+        )
+        indicator, broadcast = (
+            broadcast[: cfg.INDICATOR_LEN],
+            broadcast[cfg.INDICATOR_LEN :],
+        )
+    except:
+        print('~1')
+        raise Exception("broadcast incorrectly formatted")
     try:
         alias = int(alias)
         chain_commit = str(chain_commit)

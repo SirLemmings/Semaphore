@@ -47,11 +47,35 @@ def format_history_response(query, response):
     if response == "no_block":
         return response
     received_blocks = ast.literal_eval(response)
-    if type(received_blocks) is list:
-        for block in received_blocks:
-            if type(block) is not dict:
-                return
-        return received_blocks
+    if type(received_blocks) is not list:
+        print('~18')
+        raise Exception("blocks is not a list")
+    for block in received_blocks:
+        if type(block) is not dict:
+            raise Exception("block is not a dict")
+        if set(block.keys()) != {
+            "block_index",
+            "chain_commitment",
+            "epoch_timestamp",
+            "bc_root",
+            "sig_root",
+            "bc_body",
+            "sig_body",
+        }:
+            print('~19')
+            raise Exception("block keys are incorrect")
+        int(block['block_index'])
+        if len(block['chain_commitment']) != cfg.CHAIN_COMMIT_LEN:
+            print('~20')
+            raise Exception('chain_commit len wrong')
+        int(block['epoch_timestamp'])
+        if len(block['bc_root']) != 64 or len(block['sig_root']) != 64:
+            print('~21')
+            raise Exception('root len incorrect')
+        if type(block['bc_body']) is not list or type(block['sig_body']) is not list:
+            print('~22')
+            raise Exception('body is not list')
+    return received_blocks
 
 
 def conclude_history_process(process):

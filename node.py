@@ -85,15 +85,29 @@ class Node:
 
         elif msg_type == "time_request":
             query_id = data[1]
+            if len(query_id) > 40:
+                print("~7")
+                return
             cl.fulfill_time_request(alias, query_id)
 
         elif msg_type == "vote_request" and cfg.activated:
             query_id = data[1]
-            epoch = int(data[2])
+            if len(query_id) > 40:
+                print("~8")
+                return
+            try:
+                epoch = int(data[2])
+            except:
+                print("~9")
+                return
             self.execute_process(epoch, "vote", "vote_request", alias, query_id)
 
         elif msg_type == "query_fulfillment":
             query_id = data[1]
+            if len(query_id) > 40:
+                print("~10")
+                return
+
             response = data[2]
             if query_id not in Query.open_queries:
                 print(f"{query_id} not in open queries")
@@ -103,21 +117,35 @@ class Node:
 
         elif msg_type == "bc_request" and cfg.activated:
             query_id = data[1]
+            if len(query_id) > 40:
+                print("~11")
+                return
             data = ast.literal_eval(data[2])
             epoch, bcid = data
-            epoch = int(epoch)
+            try:
+                epoch = int(epoch)
+            except:
+                print("~12")
+                return
             self.execute_process(epoch, "vote", "bc_request", alias, query_id, bcid)
-
-        elif msg_type == "block_request" and cfg.activated:
-            query_id = data[1]
-            epoch = int(data[2])
-            self.execute_process(epoch, "sync", "block_request", alias, query_id)
 
         elif msg_type == "history_request":
             query_id = data[1]
+            if len(query_id) > 40:
+                print("~13")
+                return
             chain_tip_info = ast.literal_eval(data[2])
             chain_tip_epoch, chain_tip_hash = chain_tip_info
-            chain_tip_epoch = int(chain_tip_epoch)
+            try:
+                chain_tip_epoch = int(chain_tip_epoch)
+            except:
+                print("~14")
+                return
+            if len(chain_tip_hash) != 64:
+                print(chain_tip_hash)
+                print(len(chain_tip_hash))
+                print("~15")
+                return
             Thread(
                 target=sy.fulfill_history_request,
                 args=[alias, query_id, chain_tip_epoch, chain_tip_hash],
@@ -126,6 +154,9 @@ class Node:
 
         elif msg_type == "fork_request":
             query_id = data[1]
+            if len(query_id) > 40:
+                print("~16")
+                return
             alt_past = ast.literal_eval(data[2])
             fc.fulfill_fork_request(alias, query_id, alt_past)
 
@@ -136,7 +167,9 @@ class Node:
             except:
                 return
             chain_commit = bc_data["chain_commit"]
-
+            if len(chain_commit) != cfg.CHAIN_COMMIT_LEN:
+                print("~17")
+                return
             if cfg.synced:
                 if chain_commit in cfg.epoch_chain_commit.inverse.keys():
                     epoch = cfg.epoch_chain_commit.inverse[chain_commit]
@@ -254,7 +287,8 @@ class Node:
                         cfg.bootstrapping = True
                         cfg.bootstrapped_epoch = (
                             cfg.current_epoch
-                            + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME+5
+                            + cfg.FORWARD_SLACK_EPOCHS * cfg.EPOCH_TIME
+                            + 5
                         )
                         epochs = [
                             epoch
