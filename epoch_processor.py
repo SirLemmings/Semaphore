@@ -28,10 +28,13 @@ class EpochProcessor:
         if epoch >= cfg.committed_epoch:
             try:
                 if cfg.synced:
+                    print('cc synced')
+                    print(cfg.epochs)
                     cfg.epoch_chain_commit[self.epoch] = cs.chain_commitment(
                         self.epoch, origin="ep"
                     )
                 else:
+                    print('cc unsynced')
                     cfg.epoch_chain_commit[self.epoch] = cs.chain_commitment(
                         self.epoch, epochs=cfg.temp_epochs, hashes=cfg.temp_hashes, origin="ep"
                     )

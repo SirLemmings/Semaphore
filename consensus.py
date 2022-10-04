@@ -4,6 +4,7 @@ import json
 import os
 import syncing as sy
 import hashlib
+from bidict import bidict
 
 
 def load_block_data(block):
@@ -11,6 +12,9 @@ def load_block_data(block):
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
     cfg.hashes[epoch] = block.block_hash
+    print(epoch)
+    print(block.block_index)
+    print()
     cfg.indexes[epoch] = block.block_index
 
     cfg.epochs.append(epoch)
@@ -87,16 +91,19 @@ def sync_func(blocks):
         epoch = block.epoch_timestamp
         if epoch in cfg.temp_epochs:
             break
+        print("received")
         load_block_data(block)
         dump = json.dumps(block.convert_to_dict())
         name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
     i = 0
+    # print('ind',cfg.indexes)
     for block in [cfg.temp_blocks[epoch] for epoch in cfg.temp_epochs]:
         i += 1
         block.update_index()
         epoch = block.epoch_timestamp
+        print("built")
         load_block_data(block)
         dump = json.dumps(block.convert_to_dict())
         name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
@@ -126,10 +133,18 @@ def sync_func(blocks):
         )
         # print(cfg.epoch_chain_commit[epoch])
         # print()
+    cfg.temp_blocks = {}
+    cfg.temp_epochs = []
+    cfg.temp_hashes = bidict({})
     print("***SYNCED***")
+    print("epochs", cfg.epochs)
 
 
 def chain_commitment(epoch, epochs=cfg.epochs, hashes=cfg.hashes, origin=None):
+    if origin == "ep":
+        print("cc info")
+        print(epochs)
+        print(cfg.epochs)
     earliest_process_epoch = (
         cfg.current_epoch
         - (cfg.SLACK_EPOCHS + cfg.VOTE_MAX_EPOCHS + cfg.SYNC_EPOCHS) * cfg.EPOCH_TIME
@@ -140,11 +155,16 @@ def chain_commitment(epoch, epochs=cfg.epochs, hashes=cfg.hashes, origin=None):
         raise Exception("insufficient blocks confirmed")
 
     committed_hashes = [hashes[i] for i in epochs[-cfg.DELAY :]]
-    # if origin == "ep":
-    # print(epochs[-cfg.DELAY :], epoch)
+
     chain_commitment = hash_commitments(committed_hashes)
     diff = int((epoch - epochs[-1]) / cfg.EPOCH_TIME) % cfg.DELAY
     chain_commitment += f"{diff:02d}"
+    if origin == "ep":
+        print("cc info2")
+        print(epochs)
+        print(cfg.epochs)
+        print(epochs[-cfg.DELAY :], epoch)
+        print(chain_commitment)
     return chain_commitment
 
 

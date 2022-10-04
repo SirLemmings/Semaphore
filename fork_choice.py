@@ -23,7 +23,7 @@ def request_fork_history(alias):
             break
 
     past_hashes = [
-        cfg.hashes[epoch] for epoch in past_epochs if epoch > cfg.DELAY * 2 - 2
+        cfg.hashes[epoch] for epoch in past_epochs if epoch > cfg.DELAY - 1
     ]
     Process(
         1,
@@ -50,7 +50,7 @@ def fulfill_fork_request(alias, query_id, past):
         else:
             past_hashes = past[0]
             past_epochs = past[0]
-        index = cfg.DELAY * 2 - 2
+        index = cfg.DELAY -1
         
         #TODO pretty sure this works right but actually dont know for sure
         for block_hash in past_hashes[1:]:
@@ -101,7 +101,7 @@ def conclude_fork_process(process):
                 return
 
     for block in blocks:
-        last_common_epoch = cfg.DELAY * 2 - 2
+        last_common_epoch = cfg.DELAY - 1
         if block == "GENESIS":
             blocks = blocks[1:]
             continue
@@ -159,6 +159,12 @@ def remove_history(last_common_epoch):
 
 
 def compare_weight(alt_blocks, last_common_epoch):
+    print('fc')
+    print(last_common_epoch)
+    print(cfg.epochs)
+    print(cfg.epochs.index(last_common_epoch) + 1)
+    print(cfg.epochs[cfg.epochs.index(last_common_epoch) + 1 :])
+    # print(cfg.epochs)
     current_blocks = [
         block
         for block in [

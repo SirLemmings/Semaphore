@@ -1,5 +1,5 @@
 import ast
-from cgi import test
+import consensus as cs
 import hashlib
 import config as cfg
 import communications as cm
@@ -48,6 +48,7 @@ class VoteProcessor:
         Thread(target=self.s.run, name=f"vote_{self.epoch}").start()
 
     def execute_vote(self):
+        # print(self.confs)
         self.requested_commits_this_round = set()
         if self.execute:
             self.s.enter(cfg.VOTE_ROUND_TIME, 0, self.execute_vote)
@@ -96,7 +97,7 @@ class VoteProcessor:
         response = ast.literal_eval(response)
         received_acks = response[0]
         commit = response[1]
-        
+
         if cfg.synced and (cfg.activated or cfg.enforce_chain):
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 if received_acks == {}:
@@ -104,7 +105,7 @@ class VoteProcessor:
                 if type(received_acks) is set:
                     return received_acks
             else:
-                print('wrong commit')
+                print("wrong commit")
                 print(commit)
                 print(cfg.epoch_chain_commit[self.epoch])
                 return "wrong_commit"
@@ -113,8 +114,6 @@ class VoteProcessor:
                 received_acks = set()
             if type(received_acks) is set:
                 return received_acks
-
-        
 
     def conclude_vote_process(self, process):
         """incorporate information for round of epoch vote"""
@@ -181,6 +180,7 @@ class VoteProcessor:
             bcid (str): The ID of the missing broadcast
             epoch (int): The epoch that the missing broadcast belongs to 
         """
+        print("request", bcid)
         Process(
             1,
             VoteProcessor.format_bc_response,
@@ -215,21 +215,26 @@ class VoteProcessor:
     def conclude_bc_process(self, process):
         """incorporate data from missing bc request"""
         bcid, broadcast = process.cached_responses[0]
+        # print("processing", bcid)
         alias = process.specific_peers[0]
         if bcid != bc.calc_bcid(broadcast):
             print("peer send broadcast that didn't match bcid")
             pr.remove_peer(alias)
             return
         if bcid in self.broadcasts:
+            print("ignore", bcid, 1)
             return
         if not bc.check_broadcast_validity_vote(broadcast, self.epoch):
             self.rejected_bcids.add(bcid)
+            print("reject", bcid, 2)
             return
         commit = bc.split_broadcast(broadcast)["chain_commit"]
+        # print("processing2", bcid)
         if cfg.synced:
             if commit == cfg.epoch_chain_commit[self.epoch]:
                 self.broadcasts[bcid] = broadcast
             else:
+                print("reject", bcid, 3)
                 print("REJECTED")
                 print(commit)
                 print(cfg.epoch_chain_commit[self.epoch])
@@ -238,10 +243,13 @@ class VoteProcessor:
             # Check it is on your commit
         elif cfg.enforce_chain:
             if commit[:64] in self.seen_commits:
+                print("accept", bcid)
                 self.broadcasts[bcid] = broadcast
             elif commit[:64] in self.rejected_commits:
+                print("reject", bcid, 4)
                 self.rejected_bcids.add(bcid)
             elif commit[:64] not in self.requested_commits_this_round:
+                print("pending", bcid)
                 self.request_history(alias)
                 self.pending_commits.add(commit[:64])
                 self.requested_commits_this_round.add(commit[:64])
@@ -280,24 +288,32 @@ class VoteProcessor:
             self.rejected_peers.add(alias)
             return
         blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
+
         for block in blocks:
-            if False: #TODO do correct check
+            if False:  # TODO do correct check
                 print("bad block")
                 return
-        block_hashes = []
+        if len(blocks)>0:
+            additional_epochs = [
+                epoch for epoch in cfg.epochs if epoch < blocks[0].epoch_timestamp
+            ][-cfg.DELAY :]
+        else:
+            additional_epochs = cfg.epochs[-cfg.DELAY:]
+        block_hashes = [cfg.hashes[epoch] for epoch in additional_epochs]
         test_count = 0
+
+        commitment = cs.hash_commitments(block_hashes[-cfg.DELAY :])
+        if commitment in self.pending_commits:
+            self.seen_commits.add(commitment)
+            return
         for block in blocks:
             test_count += 1
             block_hashes.append(block.block_hash)
-            commitment = ""
-            if len(block_hashes) >= cfg.DELAY:
-                for block_hash in block_hashes[-cfg.DELAY :]:
-                    commitment += block_hash
-                commitment = hashlib.sha256(commitment.encode()).hexdigest()
-
-                if commitment in self.pending_commits:
-                    self.seen_commits.add(commitment)
-                    return
+            commitment = cs.hash_commitments(block_hashes[-cfg.DELAY :])
+            if commitment in self.pending_commits:
+                self.seen_commits.add(commitment)
+                return
+        print("history disconnected")
         if test_count > 0:
             self.rejected_commits.add(commitment)
             alias = list(process.peers_responded.keys())[0]
