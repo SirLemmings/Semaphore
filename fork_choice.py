@@ -180,9 +180,11 @@ def remove_history(last_common_epoch):
         del cfg.blocks[epoch]
         del cfg.hashes[epoch]
         del cfg.indexes[epoch]
+        del cfg.historic_sates[epoch]
         name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
         os.remove(name)
     cfg.epochs = cfg.epochs[:index]
+    cfg.current_state = cfg.historic_sates[cfg.epochs[-1]]
     print("aft", cfg.epochs[:15])
 
 
