@@ -1,8 +1,5 @@
 import hashlib
-from numpy import block
-from xarray import broadcast
-
-import broadcasts as bc
+import broadcasts as bccc
 import config as cfg
 import consensus as cs
 
@@ -94,7 +91,7 @@ class Block:
     def __init__(self, broadcasts=None, epoch=None, init_dict=None):
         """Create a block from a set of broadcasts or from a dict"""
         if init_dict is None:
-            data = [bc.split_broadcast(broadcast) for broadcast in broadcasts]
+            data = [bccc.split_broadcast(broadcast) for broadcast in broadcasts]
             if cfg.activated:
                 self.chain_commitment = cfg.epoch_chain_commit[epoch]
             else:
@@ -123,10 +120,32 @@ class Block:
                     sig_data_filtered.append(sig)
                     seen_aliases.add(alias)
 
-            # print(sig_data)
+            # STATE STUFF
+            bc_data_final = []
+            sig_data_final = []
+            block_taken_nyms = set()
+            for bc, sig in zip(bc_data_filtered, sig_data_filtered):
+                indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
+                message = bc[cfg.ALIAS_LEN + cfg.INDICATOR_LEN + indicator :]
 
-            bc_tree = build_merkle_tree(bc_data_filtered)
-            sig_tree = build_merkle_tree(sig_data_filtered)
+                if message[0] != "!":  # broadcast is not an operator
+                    bc_data_final.append(bc)
+                    sig_data_final.append(sig)
+                else:
+                    operator = message.split(".")
+                    if operator[0] == "!update_nym":
+                        new_nym = operator[1]
+                        if (
+                            new_nym not in cfg.current_state.taken_nyms
+                            and new_nym not in block_taken_nyms
+                        ):
+                            block_taken_nyms.add(new_nym)
+                            bc_data_final.append(bc)
+                            sig_data_final.append(sig)
+            # /STATE STUFF
+
+            bc_tree = build_merkle_tree(bc_data_final)
+            sig_tree = build_merkle_tree(sig_data_final)
 
             self.bc_root = bc_tree[0][0]
             self.sig_root = sig_tree[0][0]
@@ -154,14 +173,17 @@ class Block:
             self.bc_body = init_dict["bc_body"]
             self.sig_body = init_dict["sig_body"]
 
+        # self.aliases = set()
+        # self.state_transition = []
+        # for broadcast in self.bc_body:
+        #     self.aliases.add(int(broadcast[:cfg.ALIAS_LEN]))
+
     def update_index(self):
         self.block_index = len(cfg.indexes)
 
     @property
     def block_hash(self) -> str:
         """calculates the hash of a block"""
-        if block == "GENESIS":
-            return "GENESIS"
         header_str = ""
         header_str += self.bc_root
         header_str += self.sig_root
@@ -217,7 +239,7 @@ class Block:
             f"{sig}{bc[:cfg.ALIAS_LEN]}{self.chain_commitment}{bc[cfg.ALIAS_LEN:]}"
             for sig, bc in zip(self.sig_body, self.bc_body)
         ]
-        alias_list = [bc.split_broadcast(bct)["alias"] for bct in bc_list]
+        alias_list = [bccc.split_broadcast(bct)["alias"] for bct in bc_list]
         if alias_list != sorted(alias_list):
             print(5)
             return False
@@ -225,7 +247,7 @@ class Block:
             print(6)
             return False
         for bct in bc_list:
-            if not bc.verify_broadcast_rules(bct):
+            if not bccc.verify_broadcast_rules(bct):
                 print(7)
                 return False
         # validate bc_root and sig_root
@@ -235,6 +257,27 @@ class Block:
         if self.sig_root != build_merkle_tree(self.sig_body)[0][0]:
             print(9)
             return False
+        # TODO check validity of state transition
+
+        #STATE STUFF
+        block_taken_nyms = set()
+        for bc in self.bc_body:
+            indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
+            message = bc[cfg.ALIAS_LEN + cfg.INDICATOR_LEN + indicator :]
+
+            if message[0] != "!":  # broadcast is not an operator
+                continue
+            else:
+                operator = message.split(".")
+                if operator[0] == "!update_nym":
+                    new_nym = operator[1]
+                    if (
+                        new_nym in cfg.current_state.taken_nyms
+                        or new_nym in block_taken_nyms
+                    ):
+                        return False
+        #/STATE STUFF
+
         return True
 
     def check_chain_commitment(self, previous_epochs, previous_hashes):

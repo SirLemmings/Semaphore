@@ -2,6 +2,7 @@ import socket, json
 from alias_management import get_claimed_aliases
 import hashlib
 from bidict import bidict
+from state import State
 
 with open("params.json") as f:
     params = json.load(f)
@@ -47,7 +48,7 @@ SHOW_VOTE_CONFS = False
 DELAY = SLACK_EPOCHS + VOTE_MAX_EPOCHS + FORWARD_SLACK_EPOCHS + SYNC_EPOCHS + 1
 
 ALIAS = 0
-IP = socket.gethostbyname(socket.gethostname() + ".local")
+IP = socket.gethostbyname(socket.gethostname())
 PORT = 0
 
 pk = 0
@@ -86,9 +87,16 @@ epoch_chain_commit = bidict({})  # {epoch:chain_commit}
 GENESIS = range(DELAY)
 blocks = {i * EPOCH_TIME: "GENESIS" for i in GENESIS}  # {epoch: block}
 epochs = [i * EPOCH_TIME for i in GENESIS]
-hashes = bidict({i * EPOCH_TIME: hashlib.sha256(str(i).encode()).hexdigest() for i in GENESIS})  # {epoch: hash}
+hashes = bidict(
+    {i * EPOCH_TIME: hashlib.sha256(str(i).encode()).hexdigest() for i in GENESIS}
+)  # {epoch: hash}
 indexes = bidict({i * EPOCH_TIME: i for i in GENESIS})  # {epoch: index}
 
+current_state = {
+    alias: {"epochs": set(), "nym": "", "blockees": set()}
+    for alias in alias_keys.keys()
+}
+current_state = State()
 
 temp_blocks = {}
 temp_epochs = []

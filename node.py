@@ -332,6 +332,10 @@ class Node:
                             broadcast
                         )
                     self.peer_manager.gossip_msg(f"relay|{broadcast}")
+                elif command == "update_nym":
+                    nym = input('nym: ')
+                    broadcast = bc.update_nym(nym)
+                    cfg.epoch_processes[cfg.current_epoch].processor.handle_relay(cfg.ALIAS, broadcast)
                 elif cfg.ENABLE_MANUAL_BC and len(command) >= 1:
                     try:
                         cm.originate_broadcast(command)

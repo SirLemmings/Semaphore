@@ -65,11 +65,13 @@ def format_message(msg):
     message = msg.encode("utf-8")
     return header + message
 
+
 def verify_broadcast_rules(message):
     if not verify_message_sig:
         return False
-    #other rulese
+    # other rulese
     return True
+
 
 def verify_message_sig(message):
     """
@@ -125,9 +127,7 @@ def check_broadcast_validity_vote(broadcast, vote_epoch) -> bool:
     bc_data = split_broadcast(broadcast)
     chain_commit = bc_data["chain_commit"]
     if cfg.activated:
-        if (
-            chain_commit != cfg.epoch_chain_commit[vote_epoch]
-        ):
+        if chain_commit != cfg.epoch_chain_commit[vote_epoch]:
             return False
         return verify_broadcast_rules(broadcast)
         # return verify_message_sig(broadcast)
@@ -165,7 +165,7 @@ def split_broadcast(broadcast: str):
             broadcast[cfg.INDICATOR_LEN :],
         )
     except:
-        print('~1')
+        print("~1")
         raise Exception("broadcast incorrectly formatted")
     try:
         alias = int(alias)
@@ -206,4 +206,11 @@ def calc_bcid(broadcast: str) -> str:
     b_broadcast = body.encode()
     b_hash = hashlib.sha256(b_broadcast)
     return b_hash.hexdigest()
+
+
+def update_nym(nym: str) -> str:
+    if len(nym) <= 20:
+        return generate_broadcast(
+            f"!update_nym.{nym}", cfg.epoch_chain_commit[cfg.current_epoch], ""
+        )
 
