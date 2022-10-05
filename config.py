@@ -96,7 +96,9 @@ current_state = {
     alias: {"epochs": set(), "nym": "", "blockees": set()}
     for alias in alias_keys.keys()
 }
+
 current_state = State()
+historic_sates = {}
 
 temp_blocks = {}
 temp_epochs = []

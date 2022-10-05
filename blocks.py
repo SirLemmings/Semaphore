@@ -265,9 +265,7 @@ class Block:
             indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
             message = bc[cfg.ALIAS_LEN + cfg.INDICATOR_LEN + indicator :]
 
-            if message[0] != "!":  # broadcast is not an operator
-                continue
-            else:
+            if message[0] == "!":  # broadcast is not an operator
                 operator = message.split(".")
                 if operator[0] == "!update_nym":
                     new_nym = operator[1]

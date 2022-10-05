@@ -5,6 +5,7 @@ import os
 import syncing as sy
 import hashlib
 from bidict import bidict
+from copy import deepcopy
 
 
 def load_block_data(block):
@@ -12,9 +13,6 @@ def load_block_data(block):
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
     cfg.hashes[epoch] = block.block_hash
-    # print(epoch)
-    # print(block.block_index)
-    # print()
     cfg.indexes[epoch] = block.block_index
 
     cfg.epochs.append(epoch)
@@ -23,6 +21,27 @@ def load_block_data(block):
     for epoch in cfg.chain_commit_offset:
         if cfg.chain_commit_offset[epoch] > 0:
             cfg.chain_commit_offset[epoch] -= 1
+
+    # STATE STUFF
+    alias_set = set()
+    for bc in block.bc_body:
+        alias = int(bc[: cfg.ALIAS_LEN])
+        indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
+        message = bc[cfg.ALIAS_LEN + cfg.INDICATOR_LEN + indicator :]
+
+        alias_set.add(alias)
+        if message[0] == "!":
+            operator = message.split(".")
+            if operator[0] == "!update_nym":
+                new_nym = operator[1]
+                if alias in cfg.current_state.nym_owners:
+                    old_nym = cfg.current_state.nym_owners[alias]
+                    cfg.current_state.taken_nyms.remove(old_nym)
+                cfg.current_state.nym_owners[alias] = new_nym
+                cfg.current_state.taken_nyms.add(new_nym)
+    cfg.current_state.bc_epochs[block.epoch_timestamp] = alias_set
+    cfg.historic_sates[block.epoch_timestamp] = deepcopy(cfg.current_state)
+    # /STATE STUFF
 
 
 def temp_load_block_data(block):
@@ -137,6 +156,7 @@ def sync_func(blocks):
     cfg.temp_epochs = []
     cfg.temp_hashes = bidict({})
     print("***SYNCED***")
+
 
 def chain_commitment(epoch, epochs, hashes, origin=None):
     earliest_process_epoch = (
