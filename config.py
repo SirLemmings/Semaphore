@@ -33,6 +33,7 @@ VOTE_MAX_EPOCHS = params["VOTE_MAX_EPOCHS"]
 VOTE_ROUND_TIME = params["VOTE_ROUND_TIME"]
 SYNC_EPOCHS = params["SYNC_EPOCHS"]
 MINIMUM_REORG_DEPTH = params["MINIMUM_REORG_DEPTH"]
+SAVED_STATES_NUM = params["SAVED_STATES_NUM"]
 
 ENABLE_MANUAL_BC = True
 SEND_TEST_BC = True
@@ -99,6 +100,7 @@ current_state = {
 
 current_state = State()
 historic_sates = {DELAY-1:State()}
+historic_epochs = []
 
 temp_blocks = {}
 temp_epochs = []

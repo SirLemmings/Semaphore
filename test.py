@@ -1,17 +1,31 @@
-import random
 import time
-amt=100
-a = {i: i for i in range(amt)}
-b=[i for i in range(amt)]
-now = time.time()
-(amt-10  in a.keys())
-print(time.time() - now)
 
+history = []
 now = time.time()
-(amt-10  in a.values())
-print(time.time() - now)
+for slot in range(10000000):
+    # history.append(slot)
+    # rm_num = ((slot + 2) & -(slot + 2)) // 2
+    # # print(rm_num)
+    # rm_epochs = history[-2:0:-2][:rm_num]
+    # # print(rm_epochs)
+    # # # print(rm_epochs)
 
-now = time.time()
-(amt-10 in b)
+    # for t in rm_epochs:
+    #     history.remove(t)
+
+    # print(history)
+    # # print()
+
+    history.append([slot])
+    for i in range(len(history) - 2, 0, -1):
+        if len(history[i - 1]) == len(history[i]) and len(history[i]) == len(
+            history[i + 1]
+        ):
+            history[i - 1] += history.pop(i)
+show = [b[0] for b in history]
 print(time.time() - now)
-print(now)
+print(show)
+# for i,bucket in enumerate(history[-2:0:-1]):
+#     if len(bucket) == len(history[i-1]) and len(bucket) == len(history[i+1]):
+#         history[i-1]
+

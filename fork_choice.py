@@ -159,7 +159,7 @@ def conclude_fork_process(process):
                 break
             cs.load_block_data(block)
             dump = json.dumps(block.convert_to_dict())
-            name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
+            name = os.path.join(f"./{cfg.ALIAS}/blocks", f"{epoch}.json")
             with open(name, "wb") as f:
                 f.write(dump.encode("utf-8"))
         cfg.initialized = True
@@ -181,7 +181,7 @@ def remove_history(last_common_epoch):
         del cfg.hashes[epoch]
         del cfg.indexes[epoch]
         del cfg.historic_sates[epoch]
-        name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
+        name = os.path.join(f"./{cfg.ALIAS}/blocks", f"{epoch}.json")
         os.remove(name)
     cfg.epochs = cfg.epochs[:index]
     cfg.current_state = cfg.historic_sates[cfg.epochs[-1]]

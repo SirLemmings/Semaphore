@@ -8,6 +8,7 @@ import consensus as cs
 from epoch_processor import EpochProcessor
 from bidict import bidict
 import random
+import state as st
 
 FREQ = int(cfg.EPOCH_TIME / cfg.CLOCK_INTERVAL)
 position = 0
@@ -59,12 +60,14 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        try:
-            print([cfg.current_state.bc_epochs[e] for e in cfg.epochs[-10:]])
-            print(cfg.current_state.taken_nyms)
-            print(cfg.current_state.nym_owners)
-        except:
-            pass
+        print(cfg.historic_epochs)
+        # try:
+            # print(cfg.current_state.bc_epochs)
+            # print(cfg.current_state.taken_nyms)
+            # print(cfg.current_state.nym_owners)
+            # print(cfg.historic_epochs)
+        # except:
+        #     pass
         # print(cfg.epochs)
         # print(cfg.indexes)
         # print(sorted(cfg.hashes))
@@ -112,6 +115,7 @@ def run_epoch():
             not cfg.synced
         ):  # TODO this is delayed by cfg.DELAY periods because the chain commit might be borked if it is run not at the start of epoch process. should fix the function and remove the extra delay
             cs.sync()
+        st.clear_state()
 
     if cfg.current_epoch == 0:
         cfg.current_epoch = round(cl.network_time()) + cfg.EPOCH_TIME

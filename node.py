@@ -40,12 +40,15 @@ class Node:
             block_files = [file for _, file in sorted(zip(numbers, block_files))]
 
             for file in block_files:
-                name = os.path.join(f"./{folder}", f"{file}")
+                name = os.path.join(f"./{folder}/blocks", f"{file}")
                 with open(name, "rb") as f:
                     block = bk.Block(init_dict=json.load(f))
                     cs.load_block_data(block)
         else:
             os.mkdir(f"{cfg.ALIAS}")
+            if not os.path.isdir('blocks'):
+                os.mkdir(f'{cfg.ALIAS}/blocks')
+                os.mkdir(f'{cfg.ALIAS}/states')
 
         t_socket = Thread(
             target=cm.socket_events, args=[self.interpret_message], name="socket"

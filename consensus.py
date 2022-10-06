@@ -24,6 +24,7 @@ def load_block_data(block):
 
     # STATE STUFF
     alias_set = set()
+    cfg.current_state.epoch = block.epoch_timestamp
     for bc in block.bc_body:
         alias = int(bc[: cfg.ALIAS_LEN])
         indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
@@ -41,6 +42,7 @@ def load_block_data(block):
                 cfg.current_state.taken_nyms.add(new_nym)
     cfg.current_state.bc_epochs[block.epoch_timestamp] = alias_set
     cfg.historic_sates[block.epoch_timestamp] = deepcopy(cfg.current_state)
+    cfg.historic_epochs.append(block.epoch_timestamp)
     # /STATE STUFF
 
 
@@ -91,7 +93,7 @@ def add_block(block, epoch):
                 )
 
         dump = json.dumps(block.convert_to_dict())
-        name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
+        name = os.path.join(f"./{cfg.ALIAS}/blocks", f"{epoch}.json")
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
 
@@ -113,7 +115,7 @@ def sync_func(blocks):
         # print("received")
         load_block_data(block)
         dump = json.dumps(block.convert_to_dict())
-        name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
+        name = os.path.join(f"./{cfg.ALIAS}/blocks", f"{epoch}.json")
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
     i = 0
@@ -125,7 +127,7 @@ def sync_func(blocks):
         # print("built")
         load_block_data(block)
         dump = json.dumps(block.convert_to_dict())
-        name = os.path.join(f"./{cfg.ALIAS}", f"{epoch}.json")
+        name = os.path.join(f"./{cfg.ALIAS}/blocks", f"{epoch}.json")
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
 
