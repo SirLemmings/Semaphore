@@ -61,6 +61,7 @@ def run_epoch():
         print()
         print("~EPOCH", cfg.current_epoch)
         print(cfg.historic_epochs)
+        print(cfg.historic_sates)
         # try:
             # print(cfg.current_state.bc_epochs)
             # print(cfg.current_state.taken_nyms)

@@ -5,7 +5,6 @@ import os
 import syncing as sy
 import hashlib
 from bidict import bidict
-from copy import deepcopy
 
 
 def load_block_data(block):
@@ -41,9 +40,10 @@ def load_block_data(block):
                 cfg.current_state.nym_owners[alias] = new_nym
                 cfg.current_state.taken_nyms.add(new_nym)
     cfg.current_state.bc_epochs[block.epoch_timestamp] = alias_set
-    cfg.historic_sates[block.epoch_timestamp] = deepcopy(cfg.current_state)
+    cfg.historic_sates[block.epoch_timestamp] = cfg.current_state.duplicate()
     cfg.historic_epochs.append(block.epoch_timestamp)
     # /STATE STUFF
+
 
 
 def temp_load_block_data(block):
