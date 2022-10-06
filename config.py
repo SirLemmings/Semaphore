@@ -98,7 +98,7 @@ current_state = {
 }
 
 current_state = State()
-historic_sates = {}
+historic_sates = {DELAY-1:State()}
 
 temp_blocks = {}
 temp_epochs = []

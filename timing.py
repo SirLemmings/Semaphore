@@ -59,9 +59,12 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        print(cfg.current_state.bc_epochs)
-        print(cfg.current_state.taken_nyms)
-        print(cfg.current_state.nym_owners)
+        try:
+            print([cfg.current_state.bc_epochs[e] for e in cfg.epochs[-10:]])
+            print(cfg.current_state.taken_nyms)
+            print(cfg.current_state.nym_owners)
+        except:
+            pass
         # print(cfg.epochs)
         # print(cfg.indexes)
         # print(sorted(cfg.hashes))
