@@ -10,6 +10,7 @@ import broadcasts as bc
 import blocks as bk
 import syncing as sy
 import fork_choice as fc
+import state as st
 
 import time
 import json
@@ -34,21 +35,37 @@ class Node:
         folder = str(cfg.ALIAS)
         if os.path.isdir(folder):
             block_files = [
-                file for file in os.listdir(folder) if file.endswith(".json")
+                file
+                for file in os.listdir(f"{folder}/blocks")
+                if file.endswith(".json")
             ]
             numbers = [int(name.split(".")[0]) for name in block_files]
             block_files = [file for _, file in sorted(zip(numbers, block_files))]
-
             for file in block_files:
                 name = os.path.join(f"./{folder}/blocks", f"{file}")
                 with open(name, "rb") as f:
                     block = bk.Block(init_dict=json.load(f))
-                    cs.load_block_data(block)
+                    cs.load_block_data(block, calc_state=False)
+
+            state_files = [
+                file
+                for file in os.listdir(f"{folder}/states")
+                if file.endswith(".json")
+            ]
+            numbers = [int(name.split(".")[0]) for name in state_files]
+            state_files = [file for _, file in sorted(zip(numbers, state_files))]
+            for file in state_files:
+                name = os.path.join(f"./{folder}/states", f"{file}")
+                with open(name, "rb") as f:
+                    state = st.State(init_dict=json.load(f))
+                    cfg.historic_states[state.epoch] = state
+                    cfg.historic_epochs.append(state.epoch)
+            st.initialize_buckets()
+            cfg.current_state = cfg.historic_states[cfg.historic_epochs[-1]]
         else:
             os.mkdir(f"{cfg.ALIAS}")
-            if not os.path.isdir('blocks'):
-                os.mkdir(f'{cfg.ALIAS}/blocks')
-                os.mkdir(f'{cfg.ALIAS}/states')
+            os.mkdir(f"{cfg.ALIAS}/blocks")
+            os.mkdir(f"{cfg.ALIAS}/states")
 
         t_socket = Thread(
             target=cm.socket_events, args=[self.interpret_message], name="socket"
@@ -336,9 +353,11 @@ class Node:
                         )
                     self.peer_manager.gossip_msg(f"relay|{broadcast}")
                 elif command == "update_nym":
-                    nym = input('nym: ')
+                    nym = input("nym: ")
                     broadcast = bc.update_nym(nym)
-                    cfg.epoch_processes[cfg.current_epoch].processor.handle_relay(cfg.ALIAS, broadcast)
+                    cfg.epoch_processes[cfg.current_epoch].processor.handle_relay(
+                        cfg.ALIAS, broadcast
+                    )
                 elif cfg.ENABLE_MANUAL_BC and len(command) >= 1:
                     try:
                         cm.originate_broadcast(command)

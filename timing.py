@@ -60,13 +60,14 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        print(cfg.historic_epochs)
-        print(cfg.historic_sates)
+        # print("st epochs", list(cfg.current_state.bc_epochs.keys()))
+        # print('hs',cfg.hashes)
+        # print(cfg.historic_states)
         # try:
-            # print(cfg.current_state.bc_epochs)
-            # print(cfg.current_state.taken_nyms)
-            # print(cfg.current_state.nym_owners)
-            # print(cfg.historic_epochs)
+        # print(cfg.current_state.bc_epochs)
+        # print(cfg.current_state.taken_nyms)
+        # print(cfg.current_state.nym_owners)
+        # print(cfg.historic_epochs)
         # except:
         #     pass
         # print(cfg.epochs)
@@ -75,7 +76,7 @@ def run_epoch():
         # print(sorted(cfg.temp_hashes))
 
     if cfg.initialized:
-        #Handle the processing of each active epoch
+        # Handle the processing of each active epoch
         try:
             for epoch in cfg.epoch_processes:
                 cfg.epoch_processes[epoch].step()
@@ -84,23 +85,22 @@ def run_epoch():
                 next_epoch not in cfg.epoch_processes
             ):  # TODO do something better than this check
                 start_epoch_process(next_epoch)
-        except RuntimeError as e: #occasional issue upon reorging
+        except RuntimeError as e:  # occasional issue upon reorging
             print("IGNORING ERROR:")
             print(e)
 
-
         if cfg.current_epoch > 0:
-            #Send test broadcast each epoch
+            # Send test broadcast each epoch
             if cfg.SEND_TEST_BC and cfg.activated and len(cfg.epoch_processes) > 1:
                 for i in range(1):
                     if random.random() < 1 or cfg.bootstrapping:
                         cm.originate_broadcast(f"sync{i}")
 
-            #delete epoch processor when epoch is no longer active
+            # delete epoch processor when epoch is no longer active
             for epoch in cfg.finished_epoch_processes:
                 try:
                     cfg.epoch_processes[epoch].kill_process()
-                except KeyError as e:#occasional error upon reorging
+                except KeyError as e:  # occasional error upon reorging
                     print("IGNORING ERROR:")
                     print(e)
             cfg.finished_epoch_processes = set()
@@ -116,7 +116,6 @@ def run_epoch():
             not cfg.synced
         ):  # TODO this is delayed by cfg.DELAY periods because the chain commit might be borked if it is run not at the start of epoch process. should fix the function and remove the extra delay
             cs.sync()
-        st.clear_state()
 
     if cfg.current_epoch == 0:
         cfg.current_epoch = round(cl.network_time()) + cfg.EPOCH_TIME

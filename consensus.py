@@ -5,9 +5,10 @@ import os
 import syncing as sy
 import hashlib
 from bidict import bidict
+import state as st
 
 
-def load_block_data(block):
+def load_block_data(block, calc_state=True):
     """send block data to memory"""
     epoch = block.epoch_timestamp
     cfg.blocks[epoch] = block
@@ -21,7 +22,13 @@ def load_block_data(block):
         if cfg.chain_commit_offset[epoch] > 0:
             cfg.chain_commit_offset[epoch] -= 1
 
+    # print('load_block',block.epoch_timestamp)
     # STATE STUFF
+    if calc_state:
+        update_state(block)
+
+
+def update_state(block):
     alias_set = set()
     cfg.current_state.epoch = block.epoch_timestamp
     for bc in block.bc_body:
@@ -40,10 +47,12 @@ def load_block_data(block):
                 cfg.current_state.nym_owners[alias] = new_nym
                 cfg.current_state.taken_nyms.add(new_nym)
     cfg.current_state.bc_epochs[block.epoch_timestamp] = alias_set
-    cfg.historic_sates[block.epoch_timestamp] = cfg.current_state.duplicate()
+    cfg.historic_states[block.epoch_timestamp] = cfg.current_state.duplicate()
     cfg.historic_epochs.append(block.epoch_timestamp)
-    # /STATE STUFF
+    # print("calc state", block.epoch_timestamp)
+    st.clear_state()
 
+    # /STATE STUFF
 
 
 def temp_load_block_data(block):
