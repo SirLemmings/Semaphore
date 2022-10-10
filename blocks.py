@@ -1,4 +1,5 @@
 import hashlib
+from time import time
 import broadcasts as bccc
 import config as cfg
 import consensus as cs
@@ -124,9 +125,37 @@ class Block:
             bc_data_final = []
             sig_data_final = []
             block_taken_nyms = set()
+            relevant_state = cfg.current_state
+            if cfg.MINIMUM_BROADCAST_TIMEOUT > 0:
+                timeout_epochs = cfg.epochs[-cfg.MINIMUM_BROADCAST_TIMEOUT :]
+                timeout_epochs = [
+                    epoch
+                    for epoch in timeout_epochs
+                    if epoch
+                    > self.epoch_timestamp
+                    - cfg.MINIMUM_BROADCAST_TIMEOUT
+                    - cfg.SYNC_EPOCHS
+                ]
+                timeout_aliases = set()
+                print(relevant_state.bc_epochs)
+                print(timeout_epochs)
+                for epoch in timeout_epochs:
+                    if epoch in relevant_state.bc_epochs:
+                        # print(relevant_state.bc_epochs[epoch])
+                        timeout_aliases = timeout_aliases.union(
+                            relevant_state.bc_epochs[epoch]
+                        )
+                # print(timeout_aliases)
+            else:
+                timeout_aliases = set()
             for bc, sig in zip(bc_data_filtered, sig_data_filtered):
                 indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
                 message = bc[cfg.ALIAS_LEN + cfg.INDICATOR_LEN + indicator :]
+                alias = int(bc[: cfg.ALIAS_LEN])
+
+                if alias in timeout_aliases:
+                    pass
+                    continue  # DO NOT ADD TO FINAL LIST
 
                 if message[0] != "!":  # broadcast is not an operator
                     bc_data_final.append(bc)
@@ -144,6 +173,11 @@ class Block:
                             sig_data_final.append(sig)
             # /STATE STUFF
 
+            print("data")
+            print(self.epoch_timestamp)
+            print(cfg.epochs[-1])
+            if len(bc_data_final) == 0:
+                raise BlockEmptyException
             bc_tree = build_merkle_tree(bc_data_final)
             sig_tree = build_merkle_tree(sig_data_final)
 
@@ -259,7 +293,7 @@ class Block:
             return False
         # TODO check validity of state transition
 
-        #STATE STUFF
+        # STATE STUFF
         block_taken_nyms = set()
         for bc in self.bc_body:
             indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
@@ -274,7 +308,7 @@ class Block:
                         or new_nym in block_taken_nyms
                     ):
                         return False
-        #/STATE STUFF
+        # /STATE STUFF
 
         return True
 
@@ -300,3 +334,6 @@ class Block:
             return set()
         return {int(broadcast[: cfg.ALIAS_LEN]) for broadcast in self.bc_body}
 
+
+class BlockEmptyException(Exception):
+    pass

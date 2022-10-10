@@ -10,7 +10,11 @@ class BuildProcessor:
         self.broadcasts = broadcasts
         self.block = None
         if self.broadcasts is not None and len(self.broadcasts) > 0:
-            self.block = bk.Block(self.broadcasts, self.epoch)
+            try:
+                self.block = bk.Block(self.broadcasts, self.epoch)
+            except bk.BlockEmptyException:
+                if self.epoch in cfg.epoch_chain_commit:
+                    del cfg.epoch_chain_commit[self.epoch]
         else:
             if self.epoch in cfg.epoch_chain_commit:
                 del cfg.epoch_chain_commit[self.epoch]

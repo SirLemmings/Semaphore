@@ -7,7 +7,7 @@ class State:
     def __init__(self, init_dict=None) -> None:
         if init_dict is None:
             self.epoch = 0
-            self.bc_epochs = {}  # {epoch: alias}
+            self.bc_epochs = {}  # {epoch: {aliases}}
             self.taken_nyms = set()
             self.nym_owners = {}  # {alias: nym}
         else:

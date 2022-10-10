@@ -106,7 +106,12 @@ def add_block(block, epoch):
         with open(name, "wb") as f:
             f.write(dump.encode("utf-8"))
 
-    stage_history_update(block)
+    if cfg.synced:
+        load_block_data(block)
+    else:
+        temp_load_block_data(block)
+    #NOTE this removed for testing
+    # stage_history_update(block)
 
 
 def sync():
