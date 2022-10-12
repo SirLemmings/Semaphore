@@ -178,7 +178,7 @@ def conclude_fork_process(process):
 def find_last_common_epoch(blocks):
     print("recieved blocks", [block.epoch_timestamp for block in blocks])
     common_epoch = cfg.DELAY-1
-    while True:
+    while len(blocks)>0:
         comparison_block = blocks.pop(0)
         block_epoch = comparison_block.epoch_timestamp
         block_hash = comparison_block.block_hash
