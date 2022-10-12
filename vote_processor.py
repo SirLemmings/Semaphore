@@ -112,11 +112,12 @@ class VoteProcessor:
                     if len(ack) != 64:
                         print('~24')
                         raise Exception("ack wrong length")
+                # print('ok')
                 return received_acks
             else:
-                # print("wrong commit")
-                # print(commit)
-                # print(cfg.epoch_chain_commit[self.epoch])
+                # print("wrong commit",self.epoch)
+                # print('got',commit)
+                # print('own',cfg.epoch_chain_commit[self.epoch])
                 return "wrong_commit"
         else:
             if received_acks == {}:
@@ -128,11 +129,13 @@ class VoteProcessor:
                 if len(ack) != 64:
                     print('~26')
                     raise Exception("ack wrong length")
+            # print('ok')
             return received_acks
 
     def conclude_vote_process(self, process):
         """incorporate information for round of epoch vote"""
         # TODO ***RIGHT NOW PEERS ARE REJECTED BY GIVING BROADCASTS FROM A DIFFERENT CHAIN. IT IS PROBABLY BEST IF ACKS THEMSELVES ARE REJECTED
+        
         acks = [i for i in process.cached_responses if i != "wrong_commit"]
         self.epoch_vote(acks, process)
 

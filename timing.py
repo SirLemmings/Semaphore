@@ -60,7 +60,7 @@ def run_epoch():
         print()
         print()
         print("~EPOCH", cfg.current_epoch)
-        print(list(cfg.epoch_processes.keys()))
+        # print(list(cfg.epoch_processes.keys()))
         # print("st epochs", list(cfg.current_state.bc_epochs.keys()))
         # print('hs',cfg.hashes)
         # print(cfg.historic_states)
@@ -71,7 +71,7 @@ def run_epoch():
         # print(cfg.historic_epochs)
         # except:
         #     pass
-        print(cfg.epochs[-5:])
+        # print(cfg.epochs[-5:])
         # print(cfg.indexes)
         # print(sorted(cfg.hashes))
         # print(sorted(cfg.temp_hashes))

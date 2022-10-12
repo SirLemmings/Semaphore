@@ -84,8 +84,8 @@ def conclude_history_process(process):
     if process.cached_responses[0] == "no_block":
         print("got no block")
         return
-    blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
 
+    blocks = [bk.Block(init_dict=block) for block in process.cached_responses[0]]
     if not bk.verify_block_chain(blocks):
         return
     

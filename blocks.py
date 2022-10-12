@@ -173,9 +173,6 @@ class Block:
                             sig_data_final.append(sig)
             # /STATE STUFF
 
-            print("data")
-            print(self.epoch_timestamp)
-            print(cfg.epochs[-1])
             if len(bc_data_final) == 0:
                 raise BlockEmptyException
             bc_tree = build_merkle_tree(bc_data_final)
@@ -251,13 +248,13 @@ class Block:
         uncommitted_epochs = [
             epoch
             for epoch in previous_epochs
-            if epoch > self.epoch_timestamp - cfg.DELAY * cfg.EPOCH_TIME
+            if epoch > self.epoch_timestamp - (cfg.DELAY-1) * cfg.EPOCH_TIME
         ]
         if len(uncommitted_epochs) > 0:
             first_uncommitted_epoch = uncommitted_epochs[0]
             if (
                 self.epoch_timestamp
-                >= first_uncommitted_epoch + cfg.DELAY * cfg.EPOCH_TIME
+                >= first_uncommitted_epoch + (cfg.DELAY-1) * cfg.EPOCH_TIME
             ):
                 print(3)
                 return False
@@ -317,10 +314,15 @@ class Block:
         committed_epochs = [
             epoch
             for epoch in previous_epochs
-            if epoch <= self.epoch_timestamp - cfg.DELAY * cfg.EPOCH_TIME
+            if epoch <= self.epoch_timestamp - (cfg.DELAY-1) * cfg.EPOCH_TIME
         ][-cfg.DELAY :]
         committed_hashes = [previous_hashes[i] for i in committed_epochs]
         correct_commitment = cs.hash_commitments(committed_hashes)
+        # print('bb', self.epoch_timestamp, correct_commitment, committed_hashes)
+        # print(previous_epochs)
+        # print()
+        # print('dd', self.chain_commitment)
+        # print()
         diff = (
             int((self.epoch_timestamp - committed_epochs[-1]) / cfg.EPOCH_TIME)
             % cfg.DELAY

@@ -43,7 +43,7 @@ class State:
             f.write(dump.encode("utf-8"))
 
     def __del__(self):
-        if self.epoch>0:
+        if self.epoch>0 and cfg.ALIAS is not None:
             name = os.path.join(f"./{cfg.ALIAS}/states", f"{self.epoch}.json")
             os.remove(name)
 
@@ -62,7 +62,7 @@ def initialize_buckets():
                 range(
                     history[i],
                     history[i + 1],
-                    cfg.SAVED_STATES_NUM * cfg.EPOCH_TIME,
+                    cfg.RECENT_SAVED_STATES_NUM * cfg.EPOCH_TIME,
                 )
             )
         )
@@ -70,10 +70,10 @@ def initialize_buckets():
 
 
 def clear_state():
-    if len(cfg.historic_epochs) > cfg.SAVED_STATES_NUM+1:
-        history = cfg.historic_epochs[1: -cfg.SAVED_STATES_NUM]
+    if len(cfg.historic_epochs) > cfg.RECENT_SAVED_STATES_NUM+1:
+        history = cfg.historic_epochs[1: -cfg.RECENT_SAVED_STATES_NUM]
         last_epoch = history[-1]
-        if last_epoch % cfg.SAVED_STATES_NUM != 0:
+        if last_epoch % cfg.SAVED_STATE_RATE != 0:
             del cfg.historic_states[last_epoch]
             cfg.historic_epochs.remove(last_epoch)
         else:

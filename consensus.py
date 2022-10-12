@@ -110,7 +110,7 @@ def add_block(block, epoch):
         load_block_data(block)
     else:
         temp_load_block_data(block)
-    #NOTE this removed for testing
+    # #NOTE this removed for testing
     # stage_history_update(block)
 
 
@@ -151,8 +151,10 @@ def sync_func(blocks):
     # print("111111")
     # print(cfg.epochs)
     # print(cfg.indexes)
+
+
     for epoch in cfg.epoch_processes.keys():
-        i = epoch - (cfg.DELAY) * cfg.EPOCH_TIME
+        i = epoch - (cfg.DELAY-1) * cfg.EPOCH_TIME
         # print('ep',epoch)
         while True:
             # print('i',i)
@@ -166,6 +168,8 @@ def sync_func(blocks):
         cfg.epoch_chain_commit[epoch] = chain_commitment(
             epoch, epochs, cfg.hashes, origin="ep"
         )
+
+        
         # print(cfg.epoch_chain_commit[epoch])
         # print()
     cfg.temp_blocks = {}
@@ -190,11 +194,9 @@ def chain_commitment(epoch, epochs, hashes, origin=None):
     diff = int((epoch - epochs[-1]) / cfg.EPOCH_TIME) % cfg.DELAY
     chain_commitment += f"{diff:02d}"
     # if origin == "ep":
-    #     print("cc info2")
-    #     print(epochs)
-    #     print(cfg.epochs)
-    #     print(epochs[-cfg.DELAY :], epoch)
-    #     print(chain_commitment)
+        # print("cc", epoch, chain_commitment, )
+        # print(epochs)
+        # print()
     return chain_commitment
 
 
