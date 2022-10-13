@@ -1,7 +1,6 @@
 import ast
 from typing import List
 
-from sympy import EX
 import consensus as cs
 import hashlib
 import config as cfg
@@ -49,6 +48,7 @@ class VoteProcessor:
         self.rejected_bcids = set()
         self.rejected_peers = set()
         Thread(target=self.s.run, name=f"vote_{self.epoch}").start()
+        print(11111,self.epoch,cfg.current_state.epoch)
 
     def execute_vote(self):
         # print(self.confs)

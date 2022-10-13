@@ -31,6 +31,7 @@ def update_state(block):
     updated_state = calc_state_update(block,cfg.current_state)
     cfg.current_state = updated_state
     cfg.historic_states[block.epoch_timestamp] = cfg.current_state.duplicate()
+    cfg.historic_states[block.epoch_timestamp].write_to_disk()
     cfg.historic_epochs.append(block.epoch_timestamp)
     # print("calc state", block.epoch_timestamp)
     st.clear_state()

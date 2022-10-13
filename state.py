@@ -1,3 +1,4 @@
+from blocks import build_merkle_tree, sha_hash
 import config as cfg
 import json
 import os
@@ -25,7 +26,6 @@ class State:
         dup.bc_epochs = self.bc_epochs
         dup.taken_nyms = list(self.taken_nyms)
         dup.nym_owners = self.nym_owners
-        dup.write_to_disk()
         return dup
 
     def write_to_disk(self):
@@ -43,10 +43,21 @@ class State:
             f.write(dump.encode("utf-8"))
 
     def __del__(self):
-        if self.epoch>0 and cfg.ALIAS is not None:
+        if self.epoch > 0 and cfg.ALIAS is not None:
             name = os.path.join(f"./{cfg.ALIAS}/states", f"{self.epoch}.json")
             os.remove(name)
 
+    @property
+    def state_hash(self):
+        bc_epoch_list = sorted([(epoch,sorted(self.bc_epochs[epoch])) for epoch in self.bc_epochs])
+        taken_nyms_list = sorted(self.taken_nyms)
+        nym_owners_list = sorted([(alias,self.nym_owners[alias]) for alias in self.nym_owners])
+        state_str = ""
+        state_str += str(self.epoch)
+        state_str += build_merkle_tree(bc_epoch_list)[0][0]
+        state_str += build_merkle_tree(taken_nyms_list)[0][0]
+        state_str += build_merkle_tree(nym_owners_list)[0][0]
+        return sha_hash(state_str)
 
 
 buckets = []
@@ -70,8 +81,8 @@ def initialize_buckets():
 
 
 def clear_state():
-    if len(cfg.historic_epochs) > cfg.RECENT_SAVED_STATES_NUM+1:
-        history = cfg.historic_epochs[1: -cfg.RECENT_SAVED_STATES_NUM]
+    if len(cfg.historic_epochs) > cfg.RECENT_SAVED_STATES_NUM + 1:
+        history = cfg.historic_epochs[1 : -cfg.RECENT_SAVED_STATES_NUM]
         last_epoch = history[-1]
         if last_epoch % cfg.SAVED_STATE_RATE != 0:
             del cfg.historic_states[last_epoch]
