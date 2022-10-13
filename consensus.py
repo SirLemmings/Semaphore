@@ -27,10 +27,42 @@ def load_block_data(block, calc_state=True):
     if calc_state:
         update_state(block)
 
-
 def update_state(block):
+    updated_state = calc_state_update(block,cfg.current_state)
+    cfg.current_state = updated_state
+    cfg.historic_states[block.epoch_timestamp] = cfg.current_state.duplicate()
+    cfg.historic_epochs.append(block.epoch_timestamp)
+    # print("calc state", block.epoch_timestamp)
+    st.clear_state()
+
+# def update_state(block):
+#     alias_set = set()
+#     cfg.current_state.epoch = block.epoch_timestamp
+#     for bc in block.bc_body:
+#         alias = int(bc[: cfg.ALIAS_LEN])
+#         indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
+#         message = bc[cfg.ALIAS_LEN + cfg.INDICATOR_LEN + indicator :]
+
+#         alias_set.add(alias)
+#         if message[0] == "!":
+#             operator = message.split(".")
+#             if operator[0] == "!update_nym":
+#                 new_nym = operator[1]
+#                 if alias in cfg.current_state.nym_owners:
+#                     old_nym = cfg.current_state.nym_owners[alias]
+#                     cfg.current_state.taken_nyms.remove(old_nym)
+#                 cfg.current_state.nym_owners[alias] = new_nym
+#                 cfg.current_state.taken_nyms.add(new_nym)
+#     cfg.current_state.bc_epochs[block.epoch_timestamp] = alias_set
+#     cfg.historic_states[block.epoch_timestamp] = cfg.current_state.duplicate()
+#     cfg.historic_epochs.append(block.epoch_timestamp)
+#     # print("calc state", block.epoch_timestamp)
+#     st.clear_state()
+
+    # /STATE STUFF
+def calc_state_update(block,state): #TODO probably make this method of state object
     alias_set = set()
-    cfg.current_state.epoch = block.epoch_timestamp
+    state.epoch = block.epoch_timestamp
     for bc in block.bc_body:
         alias = int(bc[: cfg.ALIAS_LEN])
         indicator = int(bc[cfg.ALIAS_LEN : cfg.ALIAS_LEN + cfg.INDICATOR_LEN])
@@ -41,18 +73,13 @@ def update_state(block):
             operator = message.split(".")
             if operator[0] == "!update_nym":
                 new_nym = operator[1]
-                if alias in cfg.current_state.nym_owners:
-                    old_nym = cfg.current_state.nym_owners[alias]
-                    cfg.current_state.taken_nyms.remove(old_nym)
-                cfg.current_state.nym_owners[alias] = new_nym
-                cfg.current_state.taken_nyms.add(new_nym)
-    cfg.current_state.bc_epochs[block.epoch_timestamp] = alias_set
-    cfg.historic_states[block.epoch_timestamp] = cfg.current_state.duplicate()
-    cfg.historic_epochs.append(block.epoch_timestamp)
-    # print("calc state", block.epoch_timestamp)
-    st.clear_state()
-
-    # /STATE STUFF
+                if alias in state.nym_owners:
+                    old_nym = state.nym_owners[alias]
+                    state.taken_nyms.remove(old_nym)
+                state.nym_owners[alias] = new_nym
+                state.taken_nyms.add(new_nym)
+    state.bc_epochs[block.epoch_timestamp] = alias_set
+    return state
 
 
 def temp_load_block_data(block):

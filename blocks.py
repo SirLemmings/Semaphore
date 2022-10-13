@@ -74,15 +74,32 @@ def verify_block_chain(blocks):
     previous_epochs = [epoch for epoch in cfg.epochs if epoch < first_block_epoch][
         -cfg.DELAY * 2 :
     ]
+    if first_block_epoch - cfg.EPOCH_TIME in cfg.historic_states:
+        previous_state = cfg.historic_states[first_block_epoch - cfg.EPOCH_TIME]
+    else:
+        last_saved_state_epoch = [
+            epoch for epoch in cfg.historic_epochs if epoch < first_block_epoch
+        ][-1]
+        last_common_epoch = [
+            epoch for epoch in cfg.epochs if epoch < first_block_epoch
+        ][-1]
+        starting_state = cfg.historic_states[last_saved_state_epoch]
+        epochs_to_recalc = cfg.epochs[
+            cfg.indexes[last_saved_state_epoch]+1 : cfg.indexes[last_common_epoch]+1
+        ]
+        for epoch in epochs_to_recalc:
+            starting_state = cs.calc_state_update(cfg.blocks[epoch], starting_state)
+        previous_state = starting_state
 
     previous_hashes = {epoch: cfg.hashes[epoch] for epoch in previous_epochs}
     for block in blocks:
         if not block.check_chain_commitment(previous_epochs, previous_hashes):
             print("commit")
             return False
-        if not block.check_block_valid(previous_epochs):
+        if not block.check_block_valid(previous_epochs, previous_state):
             print("block")
             return False
+        previous_state = cs.calc_state_update(block,previous_state)
         previous_epochs.append(block.epoch_timestamp)
         previous_hashes[block.epoch_timestamp] = block.block_hash
     return True
@@ -137,8 +154,8 @@ class Block:
                     - cfg.SYNC_EPOCHS
                 ]
                 timeout_aliases = set()
-                print(relevant_state.bc_epochs)
-                print(timeout_epochs)
+                # print(relevant_state.bc_epochs)
+                # print(timeout_epochs)
                 for epoch in timeout_epochs:
                     if epoch in relevant_state.bc_epochs:
                         # print(relevant_state.bc_epochs[epoch])
@@ -233,7 +250,7 @@ class Block:
         output["sig_body"] = self.sig_body
         return output
 
-    def check_block_valid(self, previous_epochs):
+    def check_block_valid(self, previous_epochs, previous_state):
         """checks that all the contents of a block are valid"""
         # validate epoch_timestamp
         if type(self.epoch_timestamp) is not int:
@@ -248,13 +265,13 @@ class Block:
         uncommitted_epochs = [
             epoch
             for epoch in previous_epochs
-            if epoch > self.epoch_timestamp - (cfg.DELAY-1) * cfg.EPOCH_TIME
+            if epoch > self.epoch_timestamp - (cfg.DELAY - 1) * cfg.EPOCH_TIME
         ]
         if len(uncommitted_epochs) > 0:
             first_uncommitted_epoch = uncommitted_epochs[0]
             if (
                 self.epoch_timestamp
-                >= first_uncommitted_epoch + (cfg.DELAY-1) * cfg.EPOCH_TIME
+                >= first_uncommitted_epoch + (cfg.DELAY - 1) * cfg.EPOCH_TIME
             ):
                 print(3)
                 return False
@@ -281,6 +298,30 @@ class Block:
             if not bccc.verify_broadcast_rules(bct):
                 print(7)
                 return False
+        
+        if cfg.MINIMUM_BROADCAST_TIMEOUT > 0:
+            timeout_epochs = cfg.epochs[-cfg.MINIMUM_BROADCAST_TIMEOUT :]
+            timeout_epochs = [
+                epoch
+                for epoch in timeout_epochs
+                if epoch
+                > self.epoch_timestamp
+                - cfg.MINIMUM_BROADCAST_TIMEOUT
+                - cfg.SYNC_EPOCHS
+            ]
+            timeout_aliases = set()
+                # print(relevant_state.bc_epochs)
+                # print(timeout_epochs)
+            for epoch in timeout_epochs:
+                if epoch in previous_state.bc_epochs:
+                    # print(relevant_state.bc_epochs[epoch])
+                    timeout_aliases = timeout_aliases.union(
+                        previous_state.bc_epochs[epoch]
+                    )
+            for alias in alias_list:
+                if alias in timeout_aliases:
+                    print(11)
+                    return False
         # validate bc_root and sig_root
         if self.bc_root != build_merkle_tree(self.bc_body)[0][0]:
             print(8)
@@ -304,6 +345,7 @@ class Block:
                         new_nym in cfg.current_state.taken_nyms
                         or new_nym in block_taken_nyms
                     ):
+                        print(10)
                         return False
         # /STATE STUFF
 
@@ -314,7 +356,7 @@ class Block:
         committed_epochs = [
             epoch
             for epoch in previous_epochs
-            if epoch <= self.epoch_timestamp - (cfg.DELAY-1) * cfg.EPOCH_TIME
+            if epoch <= self.epoch_timestamp - (cfg.DELAY - 1) * cfg.EPOCH_TIME
         ][-cfg.DELAY :]
         committed_hashes = [previous_hashes[i] for i in committed_epochs]
         correct_commitment = cs.hash_commitments(committed_hashes)
