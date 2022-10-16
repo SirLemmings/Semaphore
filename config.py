@@ -3,6 +3,7 @@ from alias_management import get_claimed_aliases
 import hashlib
 from bidict import bidict
 from state import State
+import os
 
 with open("params.json") as f:
     params = json.load(f)
@@ -51,9 +52,10 @@ SHOW_VOTE_CONFS = False
 DELAY = SLACK_EPOCHS + VOTE_MAX_EPOCHS + FORWARD_SLACK_EPOCHS + SYNC_EPOCHS + 1
 
 ALIAS = 0
-IP = socket.gethostbyname(socket.gethostname()[0])
+IP = socket.gethostbyname(socket.gethostname())
 print(IP)
 print(socket.gethostbyname(socket.gethostname()[0]))
+print(socket.gethostbyname('google.com'))
 PORT = 0
 
 pk = 0
