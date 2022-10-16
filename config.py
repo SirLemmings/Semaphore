@@ -51,7 +51,9 @@ SHOW_VOTE_CONFS = False
 DELAY = SLACK_EPOCHS + VOTE_MAX_EPOCHS + FORWARD_SLACK_EPOCHS + SYNC_EPOCHS + 1
 
 ALIAS = 0
-IP = socket.gethostbyname(socket.gethostname())
+IP = socket.gethostbyname(socket.gethostname()[0])
+print(IP)
+print(socket.gethostbyname(socket.gethostname()[0]))
 PORT = 0
 
 pk = 0
