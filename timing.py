@@ -65,7 +65,7 @@ def run_epoch():
         # print('hs',cfg.hashes)
         # print(cfg.historic_states)
         # try:
-        print(list(cfg.current_state.bc_epochs.keys()))
+        # print(list(cfg.current_state.bc_epochs.keys()))
         # print(cfg.current_state.taken_nyms)
         # print(cfg.current_state.nym_owners)
         # print(cfg.historic_epochs)
