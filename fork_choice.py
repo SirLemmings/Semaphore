@@ -1,4 +1,3 @@
-from sympy import EX
 import config as cfg
 import communications as cm
 import consensus as cs
