@@ -48,7 +48,7 @@ class VoteProcessor:
         self.rejected_bcids = set()
         self.rejected_peers = set()
         self.sync_state = cfg.current_state.duplicate()
-        self.sync_state_commit = self.sync_state.state_hash
+        # self.sync_state_commit = self.sync_state.state_hash
         Thread(target=self.s.run, name=f"vote_{self.epoch}").start()
         
 
