@@ -10,8 +10,3 @@ If you are unfamiliar with the project, we recommend you read our 2-pager here:
 For those interested the technical details, we invite you to read our white paper here:
 
 <a href="https://github.com/SirLemmings/Semaphore/blob/gh-pages/Semaphore_v3.pdf" target="_blank">Semaphore White Paper.</a>
-
-
-Finally, try out our WIP proof-of-concept implementation, download the zip file and follow the read-me instructions.
-
-<a href="https://github.com/SirLemmings/Semaphore/blob/gh-pages/semaphore_code.zip" target="_blank">Implementation Code.</a>
